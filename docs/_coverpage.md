@@ -13,10 +13,10 @@
 
 > Document the learning process of the graduate students
 - City: Hang Zhou
-- university: ZJUT
+- University: ZJUT
 - Research Interests: **Semantic segmentation, Object Detection**
 
-[GitHub](https://github.com/liziwen12138)
+[GitHub](https://github.com/Merlulin)
 [Get Started](#Merlin的个人笔记)
 
 <!-- 背景色 -->
