@@ -39,7 +39,11 @@
         // 搜索标题的最大层级, 1 - 6
         depth: 2,
         hideOtherSidebarContent: false, // 是否隐藏其他侧边栏内容
-      }
+      },
+      // 文本高亮，开启flat就是颜色填充
+      'flexible-alerts': {
+        style: 'flat'
+      },
     }
   </script>
   <!-- Docsify v4 -->
@@ -52,6 +56,8 @@
   <script src="//unpkg.com/docsify-count/dist/countable.js"></script>
   <!-- 代码高亮 -->
   <script src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <!-- 文本高亮 -->
+  <script src="https://unpkg.com/docsify-plugin-flexible-alerts"></script>
   <!-- 访问人数统计 -->
   <script src="https://unpkg.com/docsify-busuanzi@1.0.1/dist/docsify-busuanzi.min.js"></script>
   <!-- 支持数学LATEX数学语言 -->
