@@ -16,9 +16,9 @@
       repo: '',
       loadSidebar: true,
       subMaxLevel: 2,
-      loadNavbar: true,
       coverpage: true,
       busuanzi: true,
+      prismjs: true,
       copyCode: {
         buttonText: 'Copy to clipboard',
         errorText: 'Error',
@@ -26,22 +26,14 @@
       },
       count:{
         countable: true,
-        position: 'top',
-        margin: '10px',
-        float: 'right',
         fontsize:'0.9em',
         color:'rgb(90,90,90)',
         language:'chinese',
-        localization: {
-          words: "",
-          minute: ""
-        },
-        isExpected: true
       },
       // 完整配置参数
       search: {
         maxAge: 86400000, // 过期时间，单位毫秒，默认一天
-        paths: [], // or 'auto'
+        paths: 'auto', // or 'auto'
         placeholder: 'Type to search',
         noData: 'No Results!',
         // 搜索标题的最大层级, 1 - 6
@@ -50,6 +42,8 @@
       }
     }
   </script>
+  <!-- Docsify v4 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
   <!-- 搜索引擎 -->
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
   <!-- 方便复制代码 -->
@@ -62,7 +56,5 @@
   <script src="https://unpkg.com/docsify-busuanzi@1.0.1/dist/docsify-busuanzi.min.js"></script>
   <!-- 支持数学LATEX数学语言 -->
   <script src="https://notebook.js.org/plugin/js/docsify-katex.js"></script>
-  <!-- Docsify v4 -->
-  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
 </body>
 </html>

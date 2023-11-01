@@ -14,3 +14,8 @@
 
 ## 代码实现
 > 参考微软的开源代码（Swin-T）
+```python
+import pandas as pd
+if __name__ == '__main__':
+    print("welcome")
+```
