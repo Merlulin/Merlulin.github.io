@@ -24,3 +24,11 @@
 * Baseline
 
     * [Swin-Trans](Baseline/SwinTransformer/)
+
+* 论文收集
+
+    * [精读](Paper/Intensive/)
+    
+        * [行人属性识别](Paper/Intensive/Pedestrian_attribute_recognition/)
+
+    * [略读](Paper/Rough/)
