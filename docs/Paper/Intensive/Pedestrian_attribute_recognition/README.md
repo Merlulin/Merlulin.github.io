@@ -2,7 +2,7 @@
 
 ## 基于解耦表征学习的行人属性识别
 
-> Learning Disentangled Attribute Representations for Robust Pedestrian Attribute Recognition
+> Learning Disentangled Attribute Representations for Robust Pedestrian Attribute Recognition<br>地址：https://ojs.aaai.org/index.php/AAAI/article/view/19991
 
 ### 研究现状：
 
@@ -69,3 +69,5 @@
 同理构建一个负三元组$(a_m^n,f_m^n,f_m^p)$，负三元组的损失计算公式：$L_{neg,m}=\sum_{j\in N_m^n}max(0,D(a_j^n,f_j^n)-D(a_j^n,f_j^p))$
 
 >[!tip]还没结束哦！因为既然存在正负样本数目过小的情况，那么构建三元组同样会遇到这个问题：一个批次中的正例或负例太少，无法构建有效的三元组，所以采用了MOCO在2020年提出的Queue Dictionary机制动态存储每个属性的正例和负例，除了当前batch，还会从动态队列中随机抽取再构建两个额外的正负三元组计算损失。
+
+虽然论文并没有给出整个模型的整体损失函数，但我想应该就是网络架构图中的三个损失做一个简单的加和作为总损失函数。那么这篇文章的主体内容就这么多，剩下的就是实验部分了，由于原论文并未给出代码，所以后续想要复现，只能敬请期待了…………

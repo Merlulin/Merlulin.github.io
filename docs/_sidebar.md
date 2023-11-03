@@ -32,3 +32,9 @@
         * [行人属性识别](Paper/Intensive/Pedestrian_attribute_recognition/)
 
     * [略读](Paper/Rough/)
+
+* 竞赛
+
+    * [图像分割](Competition/Segmentation/)
+
+        * [Carvana_Segmentation](Competition/Segmentation/Carvana/)
