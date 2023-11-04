@@ -89,7 +89,7 @@ class CarvanaSegmentation(Dataset):
 
 ### FCN网络
 
->[!tips] 下述代码源于霹雳吧啦Wz(https://space.bilibili.com/18161609)
+>[!tip] 下述代码源于霹雳吧啦Wz(https://space.bilibili.com/18161609)
 
 **ResNet50作为Backbone**
 
