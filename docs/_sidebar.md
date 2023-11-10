@@ -8,6 +8,8 @@
 
     * [注意力机制](Utils/Attention/)
 
+    * [学习率调度器](Utils/LrSchedule/)
+
 * 图像分类
 
     * [VIT](ImageClassify/VIT/)
