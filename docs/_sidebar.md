@@ -31,6 +31,8 @@
 
     * [Swin-Trans](Baseline/SwinTransformer/)
 
+    * [MobileNet](Baseline/MobileNet/)
+
 * 论文收集
 
     * [精读](Paper/Intensive/)
