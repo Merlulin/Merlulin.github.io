@@ -33,6 +33,8 @@
 
     * [MobileNet](Baseline/MobileNet/)
 
+    * [ShuffleNet](Baseline/ShuffleNet/)
+
 * 论文收集
 
     * [精读](Paper/Intensive/)
@@ -50,3 +52,9 @@
 * 第三方库
 
     * [einops](ThreePackage/einops/)
+
+    * [timm](ThreePackage/timm/)
+
+* CPP
+
+    * [基础补充](CPP/Basic/)
