@@ -9,6 +9,18 @@
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css" />
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/sidebar.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/docsify-toc@1.0.0/dist/toc.css">
+  <style>
+    body .pagination-item-label svg {
+      height: 1.0em;
+      stroke-linecap: square;
+      stroke-linejoin: square;
+      stroke-width: 3px;
+    }
+    body .pagination-item-title {
+      font-size: 1.0em;
+    }
+  </style>
 </head>
 <body>
   <div id="app"></div>
@@ -50,6 +62,22 @@
       'flexible-alerts': {
         style: 'flat'
       },
+      // 右侧文章内导航
+      toc: {
+        scope: '.markdown-section',
+        headings: 'h1, h2, h3, h4, h5, h6',
+        title: 'Table of Contents',
+      },
+      pagination: {
+        previousText: '上一章节',
+        // or
+        nextText: {
+          '/en/': 'NEXT',
+          '/': '下一章节'
+        },
+        crossChapter: true,
+        crossChapterText: true,
+      },
     }
   </script>
   <!-- Docsify v4 -->
@@ -62,6 +90,8 @@
   <script src="//unpkg.com/docsify-count/dist/countable.js"></script>
   <!-- 代码高亮 -->
   <script src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-cpp.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-c.min.js"></script>
   <!-- 文本高亮 -->
   <script src="https://unpkg.com/docsify-plugin-flexible-alerts"></script>
   <!-- 访问人数统计 -->
@@ -72,6 +102,10 @@
   <script src="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
   <!-- 支持侧边栏可折叠 -->
   <script src="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
+  <!-- 支持右侧文章内导航 -->
+  <script src="https://unpkg.com/docsify-toc@1.0.0/dist/toc.js"></script>
+  <!-- 支持上下一章操作 -->
+  <script src="//unpkg.com/docsify-pagination/dist/docsify-pagination.min.js"></script>
 
   <script src="//cdn.jsdelivr.net/npm/marked@4"></script>
   <script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script>
