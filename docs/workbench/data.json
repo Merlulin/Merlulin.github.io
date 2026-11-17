@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-17T10:59:31+08:00",
+  "updatedAt": "2026-11-17T11:02:00+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -88,10 +88,8 @@
       "date": "2026-11-19",
       "text": "下午2点 11号楼201教室：2025新教师传帮带汇报活动",
       "done": false,
-      "updatedAt": "2026-11-17T10:56:04+08:00"
+      "updatedAt": "2026-11-17T11:02:00+08:00"
     }
   ],
-  "deletedIds": [
-    "t-20261119-chuangbangdai"
-  ]
+  "deletedIds": []
 }
