@@ -86,7 +86,13 @@
     .header-date span { font-size: 13px; color: var(--ink-3); }
     .sync-status { display: block; margin-top: 4px; }
     .sync-status.ok { color: var(--teal); }
-    .sync-status.off { color: var(--amber); }
+    .sync-status.off, .sync-status.auth, .sync-status.err { color: var(--amber); }
+    .sync-status.need { color: var(--ink-3); }
+    .header-date .btn { margin-top: 8px; }
+    .hint { color: var(--ink-3); font-size: 13px; line-height: 1.65; margin: 0 0 14px; }
+    .hint a { color: var(--teal); }
+    .hint ol { margin: 8px 0 0; padding-left: 1.2em; }
+    .token-state { font-size: 13px; margin: 0 0 10px; color: var(--ink-2); }
     .card {
       background: var(--paper);
       border: 1px solid var(--line);
@@ -367,6 +373,7 @@
       <div class="header-date">
         <strong id="todayLabel"></strong>
         <span id="syncStatus" class="sync-status">正在连接云端…</span>
+        <button class="btn tiny" id="syncSettingsBtn" type="button">云端设置</button>
       </div>
     </header>
 
@@ -422,7 +429,7 @@
       </section>
     </div>
 
-    <footer class="note">改动会保存在这台电脑的浏览器里。也可以直接告诉小飞，帮你写进工作台，避免丢失。</footer>
+    <footer class="note">填写 GitHub 令牌后，网页上的增删改会直接写回云端。令牌只保存在这台电脑的浏览器里，请不要发到聊天中。</footer>
   </div>
 
   <div class="hovercard" id="hovercard"></div>
@@ -494,9 +501,42 @@
     </form>
   </dialog>
 
+  <dialog id="syncDialog">
+    <form class="modal" id="syncForm">
+      <h3>云端写回设置</h3>
+      <p class="hint">令牌只存在这台电脑的浏览器里，不会写进网页源代码，也不要发送到聊天里。请用细粒度令牌，并且只授权这一个仓库。</p>
+      <div class="hint">
+        <ol>
+          <li>打开 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">创建 GitHub 令牌</a></li>
+          <li>只选择仓库 <code>Merlulin/Merlulin.github.io</code></li>
+          <li>权限只开启 Contents：Read and write，其余保持 No access</li>
+          <li>生成后把令牌粘贴到下面，点“保存并连接”</li>
+        </ol>
+      </div>
+      <p class="token-state" id="tokenState"></p>
+      <div class="fields">
+        <div class="field span-2">
+          <label for="githubToken">GitHub 令牌</label>
+          <input id="githubToken" type="password" autocomplete="off" spellcheck="false" placeholder="粘贴令牌，或留空以保留已保存的令牌" />
+        </div>
+      </div>
+      <div class="error" id="syncError"></div>
+      <div class="modal-actions">
+        <button class="btn danger ghost" type="button" id="clearTokenBtn">清除令牌</button>
+        <button class="btn ghost" type="button" id="cancelSync">关闭</button>
+        <button class="btn primary" type="submit">保存并连接</button>
+      </div>
+    </form>
+  </dialog>
+
   <script>
     const STORAGE_KEY = "xiaofei-workbench-web-v1";
+    const TOKEN_KEY = "xiaofei-workbench-github-token";
     const DATA_URL = "data.json";
+    const GH_REPO = "Merlulin/Merlulin.github.io";
+    const GH_PATH = "docs/workbench/data.json";
+    const GH_BRANCH = "main";
+    const GH_API = `https://api.github.com/repos/${GH_REPO}/contents/${GH_PATH}`;
     const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
     const SEED = {
       updatedAt: "2026-11-17T09:31:00+08:00",
@@ -557,21 +597,160 @@
       .replaceAll('"', "&quot;");
     const statusClass = (s) => ({ "未开始": "todo", "进行中": "doing", "已完成": "done", "已暂停": "pause" }[s] || "todo");
 
+    let cloudSha = "";
+    let pushTimer = 0;
+    let pushing = false;
+    let pushAgain = false;
+
     function readLocal() {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch { return null; }
+    }
+    function getToken() {
+      try { return (localStorage.getItem(TOKEN_KEY) || "").trim(); } catch { return ""; }
+    }
+    function setToken(token) {
+      if (token) localStorage.setItem(TOKEN_KEY, token);
+      else localStorage.removeItem(TOKEN_KEY);
+    }
+    function toBase64(str) {
+      const bytes = new TextEncoder().encode(str);
+      let bin = "";
+      for (const b of bytes) bin += String.fromCharCode(b);
+      return btoa(bin);
+    }
+    function fromBase64(b64) {
+      const bin = atob(String(b64).replace(/\s/g, ""));
+      const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+    function ghHeaders(token) {
+      return {
+        Accept: "application/vnd.github+json",
+        Authorization: "Bearer " + token,
+        "X-GitHub-Api-Version": "2022-11-28"
+      };
+    }
+    function formatStamp(updatedAt) {
+      return updatedAt ? String(updatedAt).replace("T", " ").replace(/\+08:00$/, "（北京时间）") : "";
     }
     function setSyncStatus(kind, updatedAt) {
       const el = $("syncStatus");
       if (!el) return;
-      el.className = "sync-status " + (kind === "ok" ? "ok" : kind === "off" ? "off" : "");
+      const cls = { ok: "ok", off: "off", auth: "auth", error: "err", needtoken: "need" }[kind] || "";
+      el.className = "sync-status " + cls;
       if (kind === "ok") {
-        const when = updatedAt ? String(updatedAt).replace("T", " ").replace(/\+08:00$/, "（北京时间）") : "";
+        const when = formatStamp(updatedAt);
         el.textContent = when ? "已同步云端 · " + when : "已同步云端";
       } else if (kind === "off") {
         el.textContent = "暂时连不上云端，先显示本地备份";
+      } else if (kind === "needtoken") {
+        el.textContent = "已读取云端数据。要让网页改动写回，请打开云端设置";
+      } else if (kind === "pushing") {
+        el.textContent = "正在写回云端…";
+      } else if (kind === "auth") {
+        el.textContent = "令牌无效或权限不足，请重新设置";
+      } else if (kind === "error") {
+        el.textContent = "写回失败，已先保存在本机";
       } else {
         el.textContent = "正在连接云端…";
       }
+    }
+    function payloadFrom(s) {
+      return {
+        updatedAt: s.updatedAt,
+        projects: s.projects,
+        events: s.events,
+        todos: s.todos,
+        deletedIds: s.deletedIds || []
+      };
+    }
+    async function fetchCloudViaApi(token) {
+      const res = await fetch(GH_API + "?ref=" + encodeURIComponent(GH_BRANCH) + "&t=" + Date.now(), {
+        headers: ghHeaders(token),
+        cache: "no-store"
+      });
+      if (res.status === 401 || res.status === 403) {
+        const err = new Error("auth");
+        err.code = "auth";
+        throw err;
+      }
+      if (!res.ok) throw new Error("http " + res.status);
+      const body = await res.json();
+      cloudSha = body.sha || "";
+      return JSON.parse(fromBase64(body.content));
+    }
+    async function fetchCloudViaPages() {
+      const res = await fetch(DATA_URL + "?t=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) throw new Error("http " + res.status);
+      return res.json();
+    }
+    async function loadCloudData() {
+      const token = getToken();
+      if (token) return fetchCloudViaApi(token);
+      return fetchCloudViaPages();
+    }
+    async function pushToCloud() {
+      const token = getToken();
+      if (!token) {
+        setSyncStatus("needtoken", state.updatedAt);
+        return;
+      }
+      if (pushing) { pushAgain = true; return; }
+      pushing = true;
+      setSyncStatus("pushing");
+      try {
+        for (let attempt = 0; attempt < 3; attempt++) {
+          if (!cloudSha) {
+            try { await fetchCloudViaApi(token); } catch (e) {
+              if (e.code === "auth") throw e;
+            }
+          }
+          const body = {
+            message: "sync workbench " + (state.updatedAt || nowStamp()),
+            content: toBase64(JSON.stringify(payloadFrom(state), null, 2) + "\n"),
+            branch: GH_BRANCH
+          };
+          if (cloudSha) body.sha = cloudSha;
+          const res = await fetch(GH_API, {
+            method: "PUT",
+            headers: { ...ghHeaders(token), "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+          });
+          if (res.status === 401 || res.status === 403) {
+            const err = new Error("auth");
+            err.code = "auth";
+            throw err;
+          }
+          if (res.status === 409 || res.status === 422) {
+            const cloud = await fetchCloudViaApi(token);
+            applyState(mergeStores(cloud, payloadFrom(state)), { silent: true });
+            continue;
+          }
+          if (!res.ok) throw new Error("http " + res.status);
+          const saved = await res.json();
+          cloudSha = saved.content?.sha || saved.sha || cloudSha;
+          setSyncStatus("ok", state.updatedAt);
+          return;
+        }
+        throw new Error("conflict");
+      } catch (err) {
+        setSyncStatus(err && err.code === "auth" ? "auth" : "error");
+      } finally {
+        pushing = false;
+        if (pushAgain) {
+          pushAgain = false;
+          scheduleCloudPush();
+        }
+      }
+    }
+
+    function scheduleCloudPush() {
+      if (!getToken()) {
+        setSyncStatus("needtoken", state.updatedAt);
+        return;
+      }
+      clearTimeout(pushTimer);
+      pushTimer = setTimeout(() => { pushToCloud(); }, 600);
     }
     function mergeStores(cloud, local) {
       const deleted = new Set([...(cloud?.deletedIds || []), ...(local?.deletedIds || [])]);
@@ -610,32 +789,49 @@
       const mm = pad2(Math.abs(tz) % 60);
       return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}${sign}${hh}:${mm}`;
     }
-    function saveStore(touched) {
-      const stamp = nowStamp();
-      state.updatedAt = stamp;
-      if (touched && touched.id) touched.updatedAt = stamp;
+    function saveStore(touched, options = {}) {
+      if (!options.keepStamp) {
+        const stamp = nowStamp();
+        state.updatedAt = stamp;
+        if (touched && touched.id) touched.updatedAt = stamp;
+      }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      if (!options.silent) scheduleCloudPush();
     }
-    function applyState(next) {
+    function applyState(next, options = {}) {
       state.updatedAt = next.updatedAt;
       state.projects = next.projects;
       state.events = next.events;
       state.todos = next.todos;
       state.deletedIds = next.deletedIds;
-      saveStore();
+      saveStore(null, { keepStamp: true, silent: options.silent !== false });
     }
     async function refreshFromCloud() {
       setSyncStatus("pending");
       try {
-        const res = await fetch(DATA_URL + "?t=" + Date.now(), { cache: "no-store" });
-        if (!res.ok) throw new Error(String(res.status));
-        const cloud = await res.json();
-        applyState(mergeStores(cloud, readLocal()));
-        setSyncStatus("ok", cloud.updatedAt || state.updatedAt);
+        const cloud = await loadCloudData();
+        const local = readLocal();
+        applyState(mergeStores(cloud, local), { silent: true });
+        if (getToken()) {
+          setSyncStatus("ok", state.updatedAt);
+          if ((local?.updatedAt || "") > (cloud?.updatedAt || "")) scheduleCloudPush();
+        } else {
+          setSyncStatus("needtoken", state.updatedAt);
+        }
         renderAll();
       } catch (err) {
-        setSyncStatus("off");
+        if (err && err.code === "auth") setSyncStatus("auth");
+        else setSyncStatus(getToken() ? "error" : "off");
       }
+    }
+    function updateTokenState() {
+      $("tokenState").textContent = getToken() ? "已在本机保存令牌。如需更换，请粘贴新令牌。" : "尚未在这台电脑保存令牌。";
+      $("githubToken").value = "";
+      $("syncError").textContent = "";
+    }
+    function openSyncSettings() {
+      updateTokenState();
+      $("syncDialog").showModal();
     }
 
     let state = loadStore();
@@ -848,6 +1044,42 @@
       saveStore();
       renderAll();
     }
+
+    $("syncSettingsBtn").onclick = openSyncSettings;
+    $("syncStatus").style.cursor = "pointer";
+    $("syncStatus").onclick = openSyncSettings;
+    $("cancelSync").onclick = () => $("syncDialog").close();
+    $("clearTokenBtn").onclick = () => {
+      if (!getToken() || confirm("确定清除本机保存的令牌？之后网页改动将不再写回云端。")) {
+        setToken("");
+        cloudSha = "";
+        updateTokenState();
+        setSyncStatus("needtoken", state.updatedAt);
+      }
+    };
+    $("syncForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const typed = $("githubToken").value.trim();
+      const token = typed || getToken();
+      if (!token) { $("syncError").textContent = "请先粘贴令牌。"; return; }
+      $("syncError").textContent = "";
+      const submitBtn = e.target.querySelector("button[type=submit]");
+      submitBtn.disabled = true;
+      try {
+        setToken(token);
+        await fetchCloudViaApi(token);
+        $("syncDialog").close();
+        await refreshFromCloud();
+        await pushToCloud();
+      } catch (err) {
+        if (typed) setToken("");
+        $("syncError").textContent = (err && err.code === "auth") ? "令牌无效，或没有这个仓库 Contents 的读写权限。" : "连接失败，请检查网络后重试。";
+        setSyncStatus(err && err.code === "auth" ? "auth" : "error");
+      } finally {
+        submitBtn.disabled = false;
+        $("githubToken").value = "";
+      }
+    });
 
     $("prevMonth").onclick = () => {
       const d = parseIso(monthCursor);
