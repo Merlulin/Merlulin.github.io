@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-17T11:02:00+08:00",
+  "updatedAt": "2026-11-17T11:22:08+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -33,7 +33,7 @@
       "id": "t-20261117-1",
       "date": "2026-11-17",
       "text": "龙湾师资工作编辑课程通知（发布通知）",
-      "done": false
+      "done": true
     },
     {
       "id": "t-20261117-2",
@@ -82,14 +82,9 @@
       "date": "2026-11-18",
       "text": "高校教资报名",
       "done": false
-    },
-    {
-      "id": "t-20261119-chuangbangdai",
-      "date": "2026-11-19",
-      "text": "下午2点 11号楼201教室：2025新教师传帮带汇报活动",
-      "done": false,
-      "updatedAt": "2026-11-17T11:02:00+08:00"
     }
   ],
-  "deletedIds": []
+  "deletedIds": [
+    "t-20261119-chuangbangdai"
+  ]
 }
