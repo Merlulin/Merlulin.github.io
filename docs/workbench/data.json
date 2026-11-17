@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-17T14:59:05+08:00",
+  "updatedAt": "2026-11-17T14:59:08+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -78,7 +78,7 @@
       "id": "t-20261117-7",
       "date": "2026-11-17",
       "text": "刷高校教资课程",
-      "done": false
+      "done": true
     },
     {
       "id": "t-mwk17es3-5wfqsn",
