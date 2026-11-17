@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>个人工作台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f3eee6;
+      --bg-deep: #ebe4d8;
+      --paper: #fffdf8;
+      --paper-2: #f7f1e8;
+      --ink: #1c1915;
+      --ink-2: #4a453d;
+      --ink-3: #7a7368;
+      --line: #e5ddd0;
+      --line-strong: #d4cbb8;
+      --teal: #0f6b5c;
+      --teal-deep: #0b5448;
+      --teal-soft: #e6f3ef;
+      --amber: #b45309;
+      --amber-soft: #f8ead8;
+      --rose: #9f2d3a;
+      --rose-soft: #f8e8ea;
+      --green: #2f6f4e;
+      --green-soft: #e5f3ea;
+      --shadow: 0 10px 30px rgba(50, 40, 20, 0.08);
+      --shadow-hover: 0 16px 40px rgba(50, 40, 20, 0.14);
+      --radius: 18px;
+      --font: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --serif: "Noto Serif SC", "Songti SC", serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #fff8ec 0%, transparent 60%),
+        radial-gradient(900px 400px at 100% 0%, #e7f0eb 0%, transparent 50%),
+        var(--bg);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    button, input, select, textarea { font-family: inherit; }
+    button { cursor: pointer; }
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 28px 24px 64px;
+    }
+    header.app-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .brand-kicker {
+      margin: 0 0 4px;
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+    }
+    h1 {
+      font-family: var(--serif);
+      font-size: 34px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: 0.04em;
+    }
+    .header-date {
+      text-align: right;
+      color: var(--ink-2);
+    }
+    .header-date strong {
+      display: block;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .header-date span { font-size: 13px; color: var(--ink-3); }
+    .sync-status { display: block; margin-top: 4px; }
+    .sync-status.ok { color: var(--teal); }
+    .sync-status.off { color: var(--amber); }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 22px 0;
+    }
+    .section-head h2 {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .section-head p {
+      margin: 2px 0 0;
+      color: var(--ink-3);
+      font-size: 13px;
+    }
+    .btn {
+      border: 1px solid var(--line-strong);
+      background: var(--paper);
+      color: var(--ink-2);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: 0.15s ease;
+    }
+    .btn:hover { border-color: var(--teal); color: var(--teal-deep); background: var(--teal-soft); }
+    .btn.primary {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #fff;
+    }
+    .btn.primary:hover { background: var(--teal-deep); border-color: var(--teal-deep); color: #fff; }
+    .btn.ghost { background: transparent; }
+    .btn.danger:hover { background: var(--rose-soft); border-color: var(--rose); color: var(--rose); }
+    .btn.tiny { padding: 4px 10px; font-size: 12px; }
+    .grid-main {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.9fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .gantt-wrap { padding: 8px 18px 20px; overflow-x: auto; }
+    .gantt-empty, .list-empty {
+      margin: 16px 22px 22px;
+      padding: 22px;
+      background: var(--paper-2);
+      border-radius: 12px;
+      color: var(--ink-3);
+      text-align: center;
+    }
+    .project-list { padding: 0 18px 18px; display: flex; flex-direction: column; gap: 8px; }
+    .project-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--paper-2);
+    }
+    .project-row b { font-weight: 600; }
+    .project-row .meta { color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status.todo { background: #eeeae3; color: var(--ink-2); }
+    .status.doing { background: var(--teal-soft); color: var(--teal-deep); }
+    .status.done { background: var(--green-soft); color: var(--green); }
+    .status.pause { background: var(--amber-soft); color: var(--amber); }
+    .cal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px 8px;
+    }
+    .cal-nav { display: flex; align-items: center; gap: 6px; }
+    .cal-title { font-weight: 700; font-size: 16px; min-width: 120px; text-align: center; }
+    .cal-weekdays, .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      padding: 0 14px;
+    }
+    .cal-weekdays { padding-top: 4px; }
+    .cal-weekdays span {
+      text-align: center;
+      font-size: 12px;
+      color: var(--ink-3);
+      font-weight: 600;
+      padding: 6px 0;
+    }
+    .day {
+      position: relative;
+      min-height: 72px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      padding: 6px 6px 8px;
+      background: transparent;
+      text-align: left;
+      color: var(--ink);
+      transition: 0.12s ease;
+    }
+    .day:hover, .day.has-items:hover {
+      background: var(--paper);
+      border-color: var(--line-strong);
+      box-shadow: var(--shadow);
+      z-index: 2;
+    }
+    .day.out { color: #c0b8aa; }
+    .day.today {
+      background: var(--teal-soft);
+      border-color: #cfe4de;
+    }
+    .day.selected {
+      background: #fff;
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(15, 107, 92, 0.12);
+    }
+    .day .num { font-size: 13px; font-weight: 600; }
+    .dots { display: flex; gap: 3px; margin-top: 8px; flex-wrap: wrap; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .dot.event { background: var(--teal); }
+    .dot.todo { background: var(--amber); }
+    .dot.project { background: #5b6fd6; }
+    .day-preview {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--ink-2);
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .hovercard {
+      position: fixed;
+      z-index: 40;
+      width: 280px;
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: 16px;
+      box-shadow: var(--shadow-hover);
+      padding: 14px 14px 12px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.12s ease, transform 0.12s ease;
+    }
+    .hovercard.show { opacity: 1; transform: translateY(0); }
+    .hovercard h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      font-family: var(--serif);
+    }
+    .hovercard .hc-item {
+      font-size: 12.5px;
+      padding: 5px 0;
+      border-top: 1px solid var(--line);
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .hovercard .hc-item:first-of-type { border-top: 0; }
+    .hovercard .tag {
+      flex: 0 0 auto;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--teal-deep);
+      background: var(--teal-soft);
+      border-radius: 999px;
+      padding: 0 6px;
+      line-height: 18px;
+    }
+    .hovercard .tag.todo { color: var(--amber); background: var(--amber-soft); }
+    .hovercard .tag.project { color: #3d4cb3; background: #eceefb; }
+    .hovercard .muted { color: var(--ink-3); font-size: 12px; padding: 6px 0 2px; }
+    .day-panel { padding: 8px 18px 18px; }
+    .day-panel h3 {
+      margin: 12px 0 8px;
+      font-size: 13px;
+      color: var(--ink-3);
+      font-weight: 600;
+    }
+    .event-row, .todo-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--paper-2);
+      margin-bottom: 8px;
+    }
+    .todo-row.done .todo-text { color: var(--ink-3); text-decoration: line-through; }
+    .todo-row .todo-text, .event-row .event-text { flex: 1; }
+    .event-time { color: var(--teal-deep); font-size: 12px; font-weight: 600; min-width: 92px; }
+    .check {
+      width: 18px; height: 18px; border-radius: 5px;
+      border: 1.5px solid var(--line-strong);
+      background: #fff;
+      color: #fff;
+      display: grid; place-items: center;
+      flex: 0 0 18px;
+      margin-top: 2px;
+      padding: 0;
+    }
+    .check.on { background: var(--teal); border-color: var(--teal); }
+    .composer {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .composer input, .field input, .field select {
+      flex: 1;
+      border: 1px solid var(--line-strong);
+      background: #fff;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 14px;
+      color: var(--ink);
+      outline: none;
+    }
+    .composer input:focus, .field input:focus, .field select:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(15, 107, 92, 0.12);
+    }
+    .todo-count { color: var(--ink-3); font-size: 13px; }
+    dialog {
+      border: 0;
+      border-radius: 20px;
+      padding: 0;
+      width: min(520px, 92vw);
+      box-shadow: var(--shadow-hover);
+    }
+    dialog::backdrop { background: rgba(40, 32, 20, 0.28); }
+    .modal { padding: 22px 22px 18px; }
+    .modal h3 { margin: 0 0 14px; font-family: var(--serif); font-size: 20px; }
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.span-2 { grid-column: 1 / -1; }
+    .field label { font-size: 12px; color: var(--ink-3); font-weight: 600; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+    .error { color: var(--rose); font-size: 13px; margin-top: 8px; }
+    footer.note {
+      margin-top: 22px;
+      color: var(--ink-3);
+      font-size: 12px;
+      text-align: center;
+    }
+    @media (max-width: 900px) {
+      .grid-main, .project-row, .fields { grid-template-columns: 1fr; }
+      header.app-header { align-items: flex-start; flex-direction: column; }
+      .header-date { text-align: left; }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="app-header">
+      <div>
+        <p class="brand-kicker">小飞 · 工作与日程</p>
+        <h1>个人工作台</h1>
+      </div>
+      <div class="header-date">
+        <strong id="todayLabel"></strong>
+        <span id="syncStatus" class="sync-status">正在连接云端…</span>
+      </div>
+    </header>
+
+    <section class="card" id="projectCard">
+      <div class="section-head">
+        <div>
+          <h2>项目进度</h2>
+          <p id="projectSummary">甘特图按起止日期展开</p>
+        </div>
+        <button class="btn primary" id="addProjectBtn" type="button">添加项目</button>
+      </div>
+      <div class="gantt-wrap" id="ganttWrap"></div>
+      <div class="project-list" id="projectList"></div>
+    </section>
+
+    <div class="grid-main">
+      <section class="card">
+        <div class="cal-head">
+          <div>
+            <h2 style="font-family:var(--serif);font-size:20px;margin:0;">工作日历</h2>
+            <p style="margin:2px 0 0;color:var(--ink-3);font-size:13px;">悬停日期可查看当天安排，点击可编辑</p>
+          </div>
+          <div class="cal-nav">
+            <button class="btn tiny" id="prevMonth" type="button">上一月</button>
+            <div class="cal-title" id="monthTitle"></div>
+            <button class="btn tiny" id="nextMonth" type="button">下一月</button>
+            <button class="btn tiny" id="toToday" type="button">今天</button>
+          </div>
+        </div>
+        <div class="cal-weekdays" id="weekdays"></div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="day-panel">
+          <h3 id="eventPanelTitle">当天日程</h3>
+          <div id="eventList"></div>
+          <button class="btn primary" id="addEventBtn" type="button">添加日程</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <div>
+            <h2 id="todoHeading">每日待办</h2>
+            <p class="todo-count" id="todoCount"></p>
+          </div>
+        </div>
+        <div class="day-panel">
+          <div id="todoList"></div>
+          <form class="composer" id="todoForm">
+            <input id="todoInput" placeholder="添加这一天要做的事，按回车保存" autocomplete="off" />
+            <button class="btn primary" type="submit">添加</button>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <footer class="note">改动会保存在这台电脑的浏览器里。也可以直接告诉小飞，帮你写进工作台，避免丢失。</footer>
+  </div>
+
+  <div class="hovercard" id="hovercard"></div>
+
+  <dialog id="projectDialog">
+    <form class="modal" id="projectForm">
+      <h3 id="projectDialogTitle">添加项目</h3>
+      <div class="fields">
+        <div class="field span-2">
+          <label for="pName">项目名称</label>
+          <input id="pName" required placeholder="例如：龙湾师资培训" />
+        </div>
+        <div class="field">
+          <label for="pStart">开始日期</label>
+          <input id="pStart" type="date" required />
+        </div>
+        <div class="field">
+          <label for="pEnd">结束日期</label>
+          <input id="pEnd" type="date" required />
+        </div>
+        <div class="field">
+          <label for="pProgress">进度（0-100）</label>
+          <input id="pProgress" type="number" min="0" max="100" value="0" required />
+        </div>
+        <div class="field">
+          <label for="pStatus">状态</label>
+          <select id="pStatus">
+            <option>未开始</option>
+            <option>进行中</option>
+            <option>已完成</option>
+            <option>已暂停</option>
+          </select>
+        </div>
+      </div>
+      <div class="error" id="projectError"></div>
+      <div class="modal-actions">
+        <button class="btn ghost" type="button" id="cancelProject">取消</button>
+        <button class="btn primary" type="submit">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="eventDialog">
+    <form class="modal" id="eventForm">
+      <h3 id="eventDialogTitle">添加日程</h3>
+      <div class="fields">
+        <div class="field span-2">
+          <label for="eTitle">日程标题</label>
+          <input id="eTitle" required placeholder="例如：课程通知发布" />
+        </div>
+        <div class="field">
+          <label for="eDate">日期</label>
+          <input id="eDate" type="date" required />
+        </div>
+        <div class="field">
+          <label for="eStart">开始时间</label>
+          <input id="eStart" type="time" required value="09:00" />
+        </div>
+        <div class="field span-2">
+          <label for="eEnd">结束时间</label>
+          <input id="eEnd" type="time" required value="10:00" />
+        </div>
+      </div>
+      <div class="error" id="eventError"></div>
+      <div class="modal-actions">
+        <button class="btn ghost" type="button" id="cancelEvent">取消</button>
+        <button class="btn primary" type="submit">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const STORAGE_KEY = "xiaofei-workbench-web-v1";
+    const DATA_URL = "data.json";
+    const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
+    const SEED = {
+      updatedAt: "2026-11-17T09:31:00+08:00",
+      projects: [
+        { id: "p-longwan-202611", name: "龙湾师资培训", start: "2026-11-20", end: "2026-11-21", progress: 0, status: "未开始" },
+        { id: "p-songjiao-20261207", name: "送教课程（WorkBuddy技能进阶）", start: "2026-12-07", end: "2026-12-07", progress: 0, status: "未开始" }
+      ],
+      events: [],
+      todos: [
+        { id: "t-20261117-1", date: "2026-11-17", text: "龙湾师资工作编辑课程通知（发布通知）", done: false },
+        { id: "t-20261117-2", date: "2026-11-17", text: "报销盖章审批", done: false },
+        { id: "t-20261117-3", date: "2026-11-17", text: "龙湾师资工作手册更新，编辑主持词，梳理现场工作安排", done: false },
+        { id: "t-20261117-4", date: "2026-11-17", text: "龙湾师资所有对接工作完成", done: false },
+        { id: "t-20261117-5", date: "2026-11-17", text: "周四视频剪辑备课", done: false },
+        { id: "t-20261117-6", date: "2026-11-17", text: "和夏老师分工后面的课程怎么上", done: false },
+        { id: "t-20261117-7", date: "2026-11-17", text: "刷高校教资课程", done: false }
+      ],
+      deletedIds: []
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const pad2 = (n) => String(n).padStart(2, "0");
+    const toIso = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    const todayIso = () => toIso(new Date());
+    const parseIso = (iso) => {
+      const [y, m, d] = iso.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    };
+    const addDays = (iso, n) => {
+      const d = parseIso(iso);
+      d.setDate(d.getDate() + n);
+      return toIso(d);
+    };
+    const startOfWeekMonday = (iso) => {
+      const d = parseIso(iso);
+      const offset = d.getDay() === 0 ? -6 : 1 - d.getDay();
+      return addDays(iso, offset);
+    };
+    const formatLong = (iso) => {
+      const d = parseIso(iso);
+      return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 周${["日","一","二","三","四","五","六"][d.getDay()]}`;
+    };
+    const formatMonth = (iso) => {
+      const d = parseIso(iso);
+      return `${d.getFullYear()}年${d.getMonth() + 1}月`;
+    };
+    const daysBetween = (a, b) => Math.round((parseIso(b) - parseIso(a)) / 86400000);
+    const newId = (prefix) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    const timeToNum = (t) => {
+      const [h, m] = t.split(":").map(Number);
+      return h + m / 60;
+    };
+    const numToTime = (n) => `${pad2(Math.floor(n))}:${pad2(Math.round((n - Math.floor(n)) * 60) % 60)}`;
+    const escapeHtml = (s) => String(s)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+    const statusClass = (s) => ({ "未开始": "todo", "进行中": "doing", "已完成": "done", "已暂停": "pause" }[s] || "todo");
+
+    function readLocal() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch { return null; }
+    }
+    function setSyncStatus(kind, updatedAt) {
+      const el = $("syncStatus");
+      if (!el) return;
+      el.className = "sync-status " + (kind === "ok" ? "ok" : kind === "off" ? "off" : "");
+      if (kind === "ok") {
+        const when = updatedAt ? String(updatedAt).replace("T", " ").replace(/\+08:00$/, "（北京时间）") : "";
+        el.textContent = when ? "已同步云端 · " + when : "已同步云端";
+      } else if (kind === "off") {
+        el.textContent = "暂时连不上云端，先显示本地备份";
+      } else {
+        el.textContent = "正在连接云端…";
+      }
+    }
+    function mergeStores(cloud, local) {
+      const deleted = new Set([...(cloud?.deletedIds || []), ...(local?.deletedIds || [])]);
+      const mergeList = (baseList, otherList) => {
+        const map = new Map();
+        for (const item of baseList || []) if (item && item.id && !deleted.has(item.id)) map.set(item.id, item);
+        for (const item of otherList || []) {
+          if (!item || !item.id || deleted.has(item.id)) continue;
+          const prev = map.get(item.id);
+          if (!prev) map.set(item.id, item);
+          else if ((item.updatedAt || "") > (prev.updatedAt || "")) map.set(item.id, item);
+        }
+        return [...map.values()];
+      };
+      const cloudTime = cloud?.updatedAt || "";
+      const localTime = local?.updatedAt || "";
+      const cloudFirst = !localTime || cloudTime >= localTime;
+      const first = cloudFirst ? cloud : local;
+      const second = cloudFirst ? local : cloud;
+      return {
+        updatedAt: cloudTime >= localTime ? cloudTime : localTime,
+        projects: mergeList(first?.projects, second?.projects),
+        events: mergeList(first?.events, second?.events),
+        todos: mergeList(first?.todos, second?.todos),
+        deletedIds: [...deleted]
+      };
+    }
+    function loadStore() {
+      return mergeStores(SEED, readLocal());
+    }
+    function nowStamp() {
+      const d = new Date();
+      const tz = -d.getTimezoneOffset();
+      const sign = tz >= 0 ? "+" : "-";
+      const hh = pad2(Math.floor(Math.abs(tz) / 60));
+      const mm = pad2(Math.abs(tz) % 60);
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}${sign}${hh}:${mm}`;
+    }
+    function saveStore(touched) {
+      const stamp = nowStamp();
+      state.updatedAt = stamp;
+      if (touched && touched.id) touched.updatedAt = stamp;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+    function applyState(next) {
+      state.updatedAt = next.updatedAt;
+      state.projects = next.projects;
+      state.events = next.events;
+      state.todos = next.todos;
+      state.deletedIds = next.deletedIds;
+      saveStore();
+    }
+    async function refreshFromCloud() {
+      setSyncStatus("pending");
+      try {
+        const res = await fetch(DATA_URL + "?t=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) throw new Error(String(res.status));
+        const cloud = await res.json();
+        applyState(mergeStores(cloud, readLocal()));
+        setSyncStatus("ok", cloud.updatedAt || state.updatedAt);
+        renderAll();
+      } catch (err) {
+        setSyncStatus("off");
+      }
+    }
+
+    let state = loadStore();
+    let monthCursor = todayIso().slice(0, 7) + "-01";
+    let selectedDate = todayIso();
+    let editingProjectId = null;
+    let editingEventId = null;
+    let hoverTimer = 0;
+
+    function itemsOnDate(iso) {
+      const projects = state.projects.filter((p) => p.start <= iso && iso <= p.end);
+      const events = state.events.filter((e) => e.date === iso).sort((a, b) => a.start - b.start);
+      const todos = state.todos.filter((t) => t.date === iso).sort((a, b) => Number(a.done) - Number(b.done));
+      return { projects, events, todos };
+    }
+
+    function renderHeader() {
+      $("todayLabel").textContent = formatLong(todayIso());
+    }
+
+    function renderProjects() {
+      const list = $("projectList");
+      const wrap = $("ganttWrap");
+      const items = state.projects.slice().sort((a, b) => a.start === b.start ? a.name.localeCompare(b.name, "zh-Hans") : a.start < b.start ? -1 : 1);
+      $("projectSummary").textContent = items.length ? `共 ${items.length} 个项目` : "还没有项目，点击右上角添加";
+      if (!items.length) {
+        wrap.innerHTML = "";
+        list.innerHTML = `<div class="list-empty">还没有项目。添加后会在这里看到甘特图。</div>`;
+        return;
+      }
+      wrap.innerHTML = renderGantt(items);
+      list.innerHTML = items.map((p) => `
+        <div class="project-row">
+          <div>
+            <b>${escapeHtml(p.name)}</b>
+            <div class="meta">${p.start} 至 ${p.end} · 进度 ${p.progress}%</div>
+          </div>
+          <span class="status ${statusClass(p.status)}">${p.status}</span>
+          <button class="btn tiny" data-edit-project="${p.id}" type="button">编辑</button>
+          <button class="btn tiny danger" data-del-project="${p.id}" type="button">删除</button>
+        </div>
+      `).join("");
+    }
+
+    function renderGantt(projects) {
+      const today = todayIso();
+      let from = projects.map((p) => p.start).reduce((a, b) => a < b ? a : b);
+      let to = projects.map((p) => p.end).reduce((a, b) => a > b ? a : b);
+      if (today < from) from = today;
+      if (today > to) to = today;
+      from = addDays(from, -2);
+      to = addDays(to, 2);
+      const count = Math.max(daysBetween(from, to) + 1, 1);
+      const rowH = 46, headH = 36, width = 1080, labelW = 168, plotW = width - labelW - 16;
+      const height = headH + projects.length * rowH + 10;
+      const xFor = (iso) => labelW + (daysBetween(from, iso) / count) * plotW;
+      const wFor = (s, e) => (Math.max(daysBetween(s, e) + 1, 1) / count) * plotW;
+      const tickEvery = count > 90 ? 14 : 7;
+      const ticks = [];
+      for (let i = 0; i < count; i++) {
+        const day = addDays(from, i);
+        if (i === 0 || day.endsWith("-01") || i % tickEvery === 0) ticks.push(day);
+      }
+      const todayX = xFor(today);
+      const fills = { "已完成": "#cfe8d8", "已暂停": "#f3ddc0", "未开始": "#e6e1d8", "进行中": "#9ed0c5" };
+      const tickSvg = ticks.map((tick) => {
+        const x = xFor(tick);
+        const label = tick.endsWith("-01") ? `${Number(tick.slice(5, 7))}月${Number(tick.slice(8))}日` : `${Number(tick.slice(8))}日`;
+        return `<g>
+          <line x1="${x}" x2="${x}" y1="${headH - 6}" y2="${height - 8}" stroke="#efe8dc" />
+          <text x="${x + 4}" y="22" fill="#8a8276" font-size="11" font-family="inherit">${label}</text>
+        </g>`;
+      }).join("");
+      const rows = projects.map((p, i) => {
+        const y = headH + i * rowH + 10;
+        const x = xFor(p.start);
+        const barW = Math.max(wFor(p.start, p.end), 10);
+        const progressW = barW * (p.progress / 100);
+        const short = p.name.length > 9 ? `${escapeHtml(p.name.slice(0, 9))}…` : escapeHtml(p.name);
+        return `<g>
+          <text x="12" y="${y + 16}" fill="#1c1915" font-size="13" font-family="inherit">${short}
+            <title>${escapeHtml(p.name)}</title>
+          </text>
+          <rect x="${x}" y="${y}" width="${barW}" height="22" rx="6" fill="${fills[p.status] || "#9ed0c5"}" />
+          <rect x="${x}" y="${y}" width="${progressW}" height="22" rx="6" fill="#0f6b5c" opacity="0.35" />
+          <text x="${x + 8}" y="${y + 15}" fill="#1c1915" font-size="11">${p.progress}%</text>
+        </g>`;
+      }).join("");
+      return `<svg viewBox="0 0 ${width} ${height}" width="100%" role="img" aria-label="项目进度甘特图">
+        <rect width="${width}" height="${height}" fill="#fbf7f1" rx="14" />
+        ${tickSvg}
+        <line x1="${todayX}" x2="${todayX}" y1="${headH - 6}" y2="${height - 8}" stroke="#9f2d3a" stroke-dasharray="4 3" />
+        ${rows}
+      </svg>`;
+    }
+
+    function monthCells(monthIso) {
+      const first = monthIso.slice(0, 7) + "-01";
+      const gridStart = startOfWeekMonday(first);
+      const next = addDays(first, 32).slice(0, 7) + "-01";
+      const last = addDays(next, -1);
+      const gridEnd = addDays(startOfWeekMonday(last), 6);
+      const cells = [];
+      for (let d = gridStart; d <= gridEnd; d = addDays(d, 1)) cells.push(d);
+      return cells;
+    }
+
+    function renderCalendar() {
+      $("monthTitle").textContent = formatMonth(monthCursor);
+      $("weekdays").innerHTML = WEEKDAYS.map((w) => `<span>${w}</span>`).join("");
+      const month = monthCursor.slice(0, 7);
+      const today = todayIso();
+      $("calGrid").innerHTML = monthCells(monthCursor).map((iso) => {
+        const inMonth = iso.slice(0, 7) === month;
+        const { projects, events, todos } = itemsOnDate(iso);
+        const cls = [
+          "day",
+          inMonth ? "" : "out",
+          iso === today ? "today" : "",
+          iso === selectedDate ? "selected" : "",
+          (projects.length + events.length + todos.length) ? "has-items" : ""
+        ].join(" ");
+        const preview = [...events.map((e) => e.title), ...todos.filter((t) => !t.done).map((t) => t.text)][0] || "";
+        const dots = [
+          events.length ? '<i class="dot event"></i>' : "",
+          todos.length ? '<i class="dot todo"></i>' : "",
+          projects.length ? '<i class="dot project"></i>' : ""
+        ].join("");
+        return `<button type="button" class="${cls}" data-date="${iso}" aria-label="${formatLong(iso)}">
+          <div class="num">${Number(iso.slice(8))}</div>
+          <div class="dots">${dots}</div>
+          ${preview && inMonth ? `<div class="day-preview">${escapeHtml(preview)}</div>` : ""}
+        </button>`;
+      }).join("");
+    }
+
+    function hoverContent(iso) {
+      const { projects, events, todos } = itemsOnDate(iso);
+      const rows = [
+        ...events.map((e) => `<div class="hc-item"><span class="tag">日程</span><div>${escapeHtml(e.title)}<div class="muted">${numToTime(e.start)}–${numToTime(e.end)}</div></div></div>`),
+        ...todos.map((t) => `<div class="hc-item"><span class="tag todo">待办</span><div>${t.done ? "（已完成）" : ""}${escapeHtml(t.text)}</div></div>`),
+        ...projects.map((p) => `<div class="hc-item"><span class="tag project">项目</span><div>${escapeHtml(p.name)} · ${p.status}</div></div>`)
+      ].join("");
+      const body = rows || `<div class="muted">当天暂无安排</div>`;
+      return `<h3>${formatLong(iso)}</h3>${body}`;
+    }
+
+    function placeHover(target) {
+      const card = $("hovercard");
+      const rect = target.getBoundingClientRect();
+      const width = 280;
+      let left = rect.left + rect.width / 2 - width / 2;
+      left = Math.max(12, Math.min(left, window.innerWidth - width - 12));
+      let top = rect.bottom + 8;
+      card.style.left = `${left}px`;
+      card.style.top = `${top}px`;
+      card.classList.add("show");
+      const cr = card.getBoundingClientRect();
+      if (cr.bottom > window.innerHeight - 8) {
+        top = rect.top - cr.height - 8;
+        card.style.top = `${Math.max(8, top)}px`;
+      }
+    }
+
+    function showHover(btn) {
+      clearTimeout(hoverTimer);
+      const iso = btn.getAttribute("data-date");
+      const card = $("hovercard");
+      card.innerHTML = hoverContent(iso);
+      placeHover(btn);
+    }
+    function hideHover() {
+      hoverTimer = setTimeout(() => $("hovercard").classList.remove("show"), 80);
+    }
+
+    function renderDayPanels() {
+      const { events, todos } = itemsOnDate(selectedDate);
+      $("eventPanelTitle").textContent = `${formatLong(selectedDate)}的日程`;
+      $("todoHeading").textContent = "每日待办";
+      const open = todos.filter((t) => !t.done).length;
+      $("todoCount").textContent = todos.length ? `${formatLong(selectedDate)} · ${open}/${todos.length} 未完成` : formatLong(selectedDate);
+      $("eventList").innerHTML = events.length ? events.map((e) => `
+        <div class="event-row">
+          <div class="event-time">${numToTime(e.start)}–${numToTime(e.end)}</div>
+          <div class="event-text">${escapeHtml(e.title)}</div>
+          <button class="btn tiny" data-edit-event="${e.id}" type="button">编辑</button>
+          <button class="btn tiny danger" data-del-event="${e.id}" type="button">删除</button>
+        </div>
+      `).join("") : `<div class="list-empty" style="margin:0 0 10px;">这一天还没有日程。</div>`;
+      $("todoList").innerHTML = todos.length ? todos.map((t) => `
+        <div class="todo-row ${t.done ? "done" : ""}">
+          <button class="check ${t.done ? "on" : ""}" data-toggle-todo="${t.id}" type="button" aria-label="标记完成">${t.done ? "✓" : ""}</button>
+          <div class="todo-text">${escapeHtml(t.text)}</div>
+          <button class="btn tiny" data-edit-todo="${t.id}" type="button">编辑</button>
+          <button class="btn tiny danger" data-del-todo="${t.id}" type="button">删除</button>
+        </div>
+      `).join("") : `<div class="list-empty" style="margin:0 0 10px;">这一天还没有待办。</div>`;
+    }
+
+    function renderAll() {
+      renderHeader();
+      renderProjects();
+      renderCalendar();
+      renderDayPanels();
+    }
+
+    function removeItem(kind, id) {
+      state[kind] = state[kind].filter((item) => item.id !== id);
+      if (!state.deletedIds.includes(id)) state.deletedIds.push(id);
+      saveStore();
+      renderAll();
+    }
+
+    $("prevMonth").onclick = () => {
+      const d = parseIso(monthCursor);
+      monthCursor = toIso(new Date(d.getFullYear(), d.getMonth() - 1, 1));
+      renderCalendar();
+    };
+    $("nextMonth").onclick = () => {
+      const d = parseIso(monthCursor);
+      monthCursor = toIso(new Date(d.getFullYear(), d.getMonth() + 1, 1));
+      renderCalendar();
+    };
+    $("toToday").onclick = () => {
+      monthCursor = todayIso().slice(0, 7) + "-01";
+      selectedDate = todayIso();
+      renderAll();
+    };
+
+    $("calGrid").addEventListener("click", (e) => {
+      const btn = e.target.closest(".day");
+      if (!btn) return;
+      selectedDate = btn.getAttribute("data-date");
+      renderCalendar();
+      renderDayPanels();
+    });
+    $("calGrid").addEventListener("pointerover", (e) => {
+      const btn = e.target.closest(".day");
+      if (btn) showHover(btn);
+    });
+    $("calGrid").addEventListener("pointerout", (e) => {
+      const btn = e.target.closest(".day");
+      if (btn && !btn.contains(e.relatedTarget)) hideHover();
+    });
+    window.addEventListener("scroll", () => $("hovercard").classList.remove("show"), { passive: true });
+
+    $("addProjectBtn").onclick = () => {
+      editingProjectId = null;
+      $("projectDialogTitle").textContent = "添加项目";
+      $("pName").value = "";
+      $("pStart").value = todayIso();
+      $("pEnd").value = todayIso();
+      $("pProgress").value = "0";
+      $("pStatus").value = "进行中";
+      $("projectError").textContent = "";
+      $("projectDialog").showModal();
+    };
+    $("cancelProject").onclick = () => $("projectDialog").close();
+    $("projectForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = $("pName").value.trim();
+      const start = $("pStart").value;
+      const end = $("pEnd").value;
+      const progress = Number($("pProgress").value);
+      if (!name) { $("projectError").textContent = "请填写项目名称。"; return; }
+      if (!start || !end) { $("projectError").textContent = "请填写开始和结束日期。"; return; }
+      if (end < start) { $("projectError").textContent = "结束日期不能早于开始日期。"; return; }
+      if (!Number.isFinite(progress) || progress < 0 || progress > 100) { $("projectError").textContent = "进度请填写 0 到 100。"; return; }
+      const next = { id: editingProjectId || newId("p"), name, start, end, progress: Math.round(progress), status: $("pStatus").value };
+      if (editingProjectId) state.projects = state.projects.map((p) => p.id === editingProjectId ? next : p);
+      else state.projects.push(next);
+      saveStore();
+      $("projectDialog").close();
+      renderAll();
+    });
+
+    $("addEventBtn").onclick = () => {
+      editingEventId = null;
+      $("eventDialogTitle").textContent = "添加日程";
+      $("eTitle").value = "";
+      $("eDate").value = selectedDate;
+      $("eStart").value = "09:00";
+      $("eEnd").value = "10:00";
+      $("eventError").textContent = "";
+      $("eventDialog").showModal();
+    };
+    $("cancelEvent").onclick = () => $("eventDialog").close();
+    $("eventForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const title = $("eTitle").value.trim();
+      const date = $("eDate").value;
+      const start = timeToNum($("eStart").value);
+      const end = timeToNum($("eEnd").value);
+      if (!title) { $("eventError").textContent = "请填写日程标题。"; return; }
+      if (!date) { $("eventError").textContent = "请选择日期。"; return; }
+      if (!(end > start)) { $("eventError").textContent = "结束时间必须晚于开始时间。"; return; }
+      const next = { id: editingEventId || newId("e"), date, title, start, end };
+      if (editingEventId) state.events = state.events.map((item) => item.id === editingEventId ? next : item);
+      else state.events.push(next);
+      selectedDate = date;
+      monthCursor = date.slice(0, 7) + "-01";
+      saveStore();
+      $("eventDialog").close();
+      renderAll();
+    });
+
+    $("todoForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = $("todoInput").value.trim();
+      if (!text) return;
+      state.todos.push({ id: newId("t"), date: selectedDate, text, done: false });
+      $("todoInput").value = "";
+      saveStore();
+      renderAll();
+    });
+
+    document.body.addEventListener("click", (e) => {
+      const editP = e.target.closest("[data-edit-project]");
+      const delP = e.target.closest("[data-del-project]");
+      const editE = e.target.closest("[data-edit-event]");
+      const delE = e.target.closest("[data-del-event]");
+      const toggleT = e.target.closest("[data-toggle-todo]");
+      const editT = e.target.closest("[data-edit-todo]");
+      const delT = e.target.closest("[data-del-todo]");
+      if (editP) {
+        const p = state.projects.find((x) => x.id === editP.getAttribute("data-edit-project"));
+        if (!p) return;
+        editingProjectId = p.id;
+        $("projectDialogTitle").textContent = "编辑项目";
+        $("pName").value = p.name;
+        $("pStart").value = p.start;
+        $("pEnd").value = p.end;
+        $("pProgress").value = String(p.progress);
+        $("pStatus").value = p.status;
+        $("projectError").textContent = "";
+        $("projectDialog").showModal();
+      } else if (delP) {
+        if (confirm("确定删除这个项目？")) removeItem("projects", delP.getAttribute("data-del-project"));
+      } else if (editE) {
+        const ev = state.events.find((x) => x.id === editE.getAttribute("data-edit-event"));
+        if (!ev) return;
+        editingEventId = ev.id;
+        $("eventDialogTitle").textContent = "编辑日程";
+        $("eTitle").value = ev.title;
+        $("eDate").value = ev.date;
+        $("eStart").value = numToTime(ev.start);
+        $("eEnd").value = numToTime(ev.end);
+        $("eventError").textContent = "";
+        $("eventDialog").showModal();
+      } else if (delE) {
+        if (confirm("确定删除这条日程？")) removeItem("events", delE.getAttribute("data-del-event"));
+      } else if (toggleT) {
+        const id = toggleT.getAttribute("data-toggle-todo");
+        state.todos = state.todos.map((t) => t.id === id ? { ...t, done: !t.done } : t);
+        saveStore();
+        renderAll();
+      } else if (editT) {
+        const id = editT.getAttribute("data-edit-todo");
+        const t = state.todos.find((x) => x.id === id);
+        if (!t) return;
+        const next = prompt("编辑待办", t.text);
+        if (next == null) return;
+        const text = next.trim();
+        if (!text) return;
+        state.todos = state.todos.map((item) => item.id === id ? { ...item, text } : item);
+        saveStore();
+        renderAll();
+      } else if (delT) {
+        if (confirm("确定删除这条待办？")) removeItem("todos", delT.getAttribute("data-del-todo"));
+      }
+    });
+
+    renderAll();
+    refreshFromCloud();
+  </script>
+</body>
+</html>
