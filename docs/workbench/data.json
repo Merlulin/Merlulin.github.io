@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-17T10:03:33+08:00",
+  "updatedAt": "2026-11-17T10:12:04+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -67,6 +67,12 @@
       "date": "2026-11-17",
       "text": "龙湾师资培训的线上学习手册更新",
       "done": true
+    },
+    {
+      "id": "t-mwk248al-8dxx1r",
+      "date": "2026-11-18",
+      "text": "高校教资报名",
+      "done": false
     }
   ],
   "deletedIds": []
