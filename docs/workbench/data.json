@@ -1,13 +1,13 @@
 {
-  "updatedAt": "2026-11-19T16:45:41+08:00",
+  "updatedAt": "2026-11-20T14:43:02+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
       "name": "龙湾师资培训",
       "start": "2026-11-20",
       "end": "2026-11-21",
-      "progress": 0,
-      "status": "未开始"
+      "progress": 50,
+      "status": "进行中"
     },
     {
       "id": "p-songjiao-20261207",
