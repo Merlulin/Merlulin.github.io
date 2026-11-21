@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-21T11:12:10+08:00",
+  "updatedAt": "2026-11-21T17:49:53+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -232,6 +232,13 @@
       "text": "黄书记的PPT制作",
       "done": false,
       "updatedAt": "2026-11-21T11:12:10+08:00"
+    },
+    {
+      "id": "t-20261123-handbook-domain",
+      "date": "2026-11-23",
+      "text": "更新手册域名",
+      "done": false,
+      "updatedAt": "2026-11-21T17:49:53+08:00"
     }
   ],
   "deletedIds": [
