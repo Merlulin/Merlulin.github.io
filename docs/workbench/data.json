@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-22T10:48:46+08:00",
+  "updatedAt": "2026-11-22T10:57:33+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -24,6 +24,15 @@
       "end": "2026-11-23",
       "progress": 20,
       "status": "进行中"
+    },
+    {
+      "id": "p-huang-ppt-202611",
+      "name": "黄书记的PPT",
+      "start": "2026-11-09",
+      "end": "2026-11-30",
+      "progress": 0,
+      "status": "进行中",
+      "updatedAt": "2026-11-22T10:57:33+08:00"
     }
   ],
   "events": [
@@ -227,13 +236,6 @@
       "updatedAt": "2026-11-21T11:12:10+08:00"
     },
     {
-      "id": "t-20261122-huang-ppt",
-      "date": "2026-11-22",
-      "text": "黄书记的PPT制作",
-      "done": false,
-      "updatedAt": "2026-11-21T11:12:10+08:00"
-    },
-    {
       "id": "t-20261123-handbook-domain",
       "date": "2026-11-23",
       "text": "更新手册域名",
@@ -256,6 +258,7 @@
     }
   ],
   "deletedIds": [
-    "t-20261119-chuangbangdai"
+    "t-20261119-chuangbangdai",
+    "t-20261122-huang-ppt"
   ]
 }
