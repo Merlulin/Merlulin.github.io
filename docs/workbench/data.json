@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-22T10:48:37+08:00",
+  "updatedAt": "2026-11-22T10:48:39+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -223,7 +223,7 @@
       "id": "t-20261122-longwan-plan",
       "date": "2026-11-22",
       "text": "完善龙湾的方案",
-      "done": false,
+      "done": true,
       "updatedAt": "2026-11-21T11:12:10+08:00"
     },
     {
