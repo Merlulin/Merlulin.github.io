@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-22T10:57:33+08:00",
+  "updatedAt": "2026-11-22T11:00:35+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -30,9 +30,8 @@
       "name": "黄书记的PPT",
       "start": "2026-11-09",
       "end": "2026-11-30",
-      "progress": 0,
-      "status": "进行中",
-      "updatedAt": "2026-11-22T10:57:33+08:00"
+      "progress": 40,
+      "status": "进行中"
     }
   ],
   "events": [
