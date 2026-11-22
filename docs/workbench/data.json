@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-22T10:48:43+08:00",
+  "updatedAt": "2026-11-22T10:48:46+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -244,7 +244,7 @@
       "id": "t-20261122-jieye-tongxun",
       "date": "2026-11-22",
       "text": "龙湾师资培训结业通讯稿撰写",
-      "done": false,
+      "done": true,
       "updatedAt": "2026-11-21T20:24:40+08:00"
     },
     {
