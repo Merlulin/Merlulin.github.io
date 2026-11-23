@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-23T08:36:14+08:00",
+  "updatedAt": "2026-11-23T08:36:20+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -228,13 +228,6 @@
       "updatedAt": "2026-11-21T11:12:10+08:00"
     },
     {
-      "id": "t-20261123-handbook-domain",
-      "date": "2026-11-23",
-      "text": "更新手册域名",
-      "done": false,
-      "updatedAt": "2026-11-21T17:49:53+08:00"
-    },
-    {
       "id": "t-20261122-jieye-tongxun",
       "date": "2026-11-22",
       "text": "龙湾师资培训结业通讯稿撰写",
@@ -280,6 +273,7 @@
   "deletedIds": [
     "t-20261119-chuangbangdai",
     "t-20261122-huang-ppt",
-    "t-20261122-longwan-plan"
+    "t-20261122-longwan-plan",
+    "t-20261123-handbook-domain"
   ]
 }
