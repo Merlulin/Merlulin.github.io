@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-22T11:00:55+08:00",
+  "updatedAt": "2026-11-23T08:25:55+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -229,10 +229,10 @@
     },
     {
       "id": "t-20261122-longwan-plan",
-      "date": "2026-11-22",
-      "text": "完善龙湾的方案",
+      "date": "2026-11-23",
+      "text": "龙湾师资培训方案梳理",
       "done": false,
-      "updatedAt": "2026-11-21T11:12:10+08:00"
+      "updatedAt": "2026-11-23T08:25:55+08:00"
     },
     {
       "id": "t-20261123-handbook-domain",
@@ -254,6 +254,34 @@
       "text": "校内老师的报销信息汇总",
       "done": false,
       "updatedAt": "2026-11-21T20:24:40+08:00"
+    },
+    {
+      "id": "t-20261123-tongxun-review",
+      "date": "2026-11-23",
+      "text": "通讯稿审核",
+      "done": false,
+      "updatedAt": "2026-11-23T08:25:55+08:00"
+    },
+    {
+      "id": "t-20261123-longwan-materials",
+      "date": "2026-11-23",
+      "text": "龙湾首期培训所有材料汇总",
+      "done": false,
+      "updatedAt": "2026-11-23T08:25:55+08:00"
+    },
+    {
+      "id": "t-20261123-handbook-edit",
+      "date": "2026-11-23",
+      "text": "培训手册修改",
+      "done": false,
+      "updatedAt": "2026-11-23T08:25:55+08:00"
+    },
+    {
+      "id": "t-20261123-huang-ppt-optimize",
+      "date": "2026-11-23",
+      "text": "黄书记ppt点对点优化",
+      "done": false,
+      "updatedAt": "2026-11-23T08:25:55+08:00"
     }
   ],
   "deletedIds": [
