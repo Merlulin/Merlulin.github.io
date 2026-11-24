@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-23T13:22:26+08:00",
+  "updatedAt": "2026-11-24T09:30:07+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -252,7 +252,7 @@
       "id": "t-20261123-longwan-materials",
       "date": "2026-11-23",
       "text": "龙湾首期培训报销材料汇总",
-      "done": false,
+      "done": true,
       "updatedAt": "2026-11-23T08:25:55+08:00"
     },
     {
