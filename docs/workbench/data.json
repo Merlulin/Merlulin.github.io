@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-24T15:34:08+08:00",
+  "updatedAt": "2026-11-24T15:34:15+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -273,7 +273,7 @@
       "id": "t-20261124-tongxun-send",
       "date": "2026-11-24",
       "text": "通讯稿发出去",
-      "done": true,
+      "done": false,
       "updatedAt": "2026-11-24T09:44:50+08:00"
     },
     {
