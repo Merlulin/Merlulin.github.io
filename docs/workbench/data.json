@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-25T08:19:24+08:00",
+  "updatedAt": "2026-11-25T08:58:57+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -72,6 +72,13 @@
       "title": "老黄订婚",
       "start": 18,
       "end": 20
+    },
+    {
+      "id": "e-mwvf0zvr-di2v1u",
+      "date": "2026-11-25",
+      "title": "党支部会议",
+      "start": 14,
+      "end": 15
     }
   ],
   "todos": [
