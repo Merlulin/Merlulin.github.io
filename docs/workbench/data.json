@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-26T16:32:22+08:00",
+  "updatedAt": "2026-11-26T16:32:25+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -319,7 +319,7 @@
       "id": "t-20261125-supplement-agreement",
       "date": "2026-11-26",
       "text": "协议流程审批",
-      "done": false,
+      "done": true,
       "updatedAt": "2026-11-26T14:29:00+08:00"
     },
     {
