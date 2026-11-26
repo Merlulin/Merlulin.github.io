@@ -182,10 +182,39 @@
     .project-card > .project-row {
       background: transparent;
       border-radius: 0;
+      cursor: pointer;
     }
+    .project-card > .project-row:hover { background: rgba(255, 255, 255, 0.45); }
+    .project-card.expanded > .project-row { border-bottom: 1px solid var(--line); }
+    .project-fold-hint {
+      color: var(--ink-3);
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .project-fold-chevron {
+      display: inline-block;
+      width: 1em;
+      color: var(--ink-3);
+      font-size: 12px;
+      transition: transform 0.15s ease;
+    }
+    .project-card.expanded .project-fold-chevron { transform: rotate(90deg); }
     .subtask-panel {
       padding: 0 12px 12px;
-      border-top: 1px solid var(--line);
+      border-top: 0;
+    }
+    .gantt-wrap .gantt-hit { cursor: pointer; }
+    .gantt-wrap .gantt-hit:hover rect:first-of-type { filter: brightness(0.96); }
+    #subtaskDialog { width: min(560px, 94vw); }
+    #subtaskDialog .subtask-panel {
+      padding: 0;
+      border-top: 0;
+    }
+    #subtaskDialogMeta {
+      margin: -6px 0 12px;
+      color: var(--ink-3);
+      font-size: 13px;
     }
     .subtask-head {
       display: flex;
@@ -463,7 +492,7 @@
       <div class="section-head">
         <div>
           <h2>项目进度</h2>
-          <p id="projectSummary">甘特图按起止日期展开</p>
+          <p id="projectSummary">甘特图按起止日期展开 · 点击色条可编辑子任务</p>
         </div>
         <button class="btn primary" id="addProjectBtn" type="button">添加项目</button>
       </div>
@@ -516,6 +545,17 @@
   </div>
 
   <div class="hovercard" id="hovercard"></div>
+
+  <dialog id="subtaskDialog">
+    <div class="modal">
+      <h3 id="subtaskDialogTitle">子任务</h3>
+      <p id="subtaskDialogMeta"></p>
+      <div id="subtaskDialogBody"></div>
+      <div class="modal-actions">
+        <button class="btn ghost" type="button" id="closeSubtaskDialog">关闭</button>
+      </div>
+    </div>
+  </dialog>
 
   <dialog id="projectDialog">
     <form class="modal" id="projectForm">
@@ -975,6 +1015,8 @@
     let editingProjectId = null;
     let editingEventId = null;
     let hoverTimer = 0;
+    const expandedProjectIds = new Set();
+    let subtaskDialogProjectId = null;
 
     const isArchived = (p) => !!p && p.archived === true;
     const sortProjects = (list) => list.slice().sort((a, b) => a.start === b.start ? a.name.localeCompare(b.name, "zh-Hans") : a.start < b.start ? -1 : 1);
@@ -1014,6 +1056,13 @@
       renderArchive(archived);
     }
 
+    function subtaskSummary(p) {
+      const subs = projectSubtasks(p);
+      if (!subs.length) return "子任务";
+      const doneCount = subs.filter((s) => s.done).length;
+      return `子任务 ${doneCount}/${subs.length}`;
+    }
+
     function renderSubtaskPanel(p) {
       const subs = projectSubtasks(p);
       const doneCount = subs.filter((s) => s.done).length;
@@ -1042,24 +1091,29 @@
 
     function renderProjectCard(p, options = {}) {
       const archivedView = !!options.archivedView;
-      const subs = projectSubtasks(p);
-      const subMeta = hasSubtasks(p) ? ` · 子任务 ${subs.filter((s) => s.done).length}/${subs.length}` : "";
+      const expanded = !archivedView && expandedProjectIds.has(p.id);
+      const foldHint = archivedView
+        ? ""
+        : `<span class="project-fold-hint">${escapeHtml(subtaskSummary(p))}</span><span class="project-fold-chevron" aria-hidden="true">›</span>`;
       return `
-        <div class="project-card" data-project-card="${p.id}">
-          <div class="project-row">
+        <div class="project-card ${expanded ? "expanded" : ""}" data-project-card="${p.id}">
+          <div class="project-row" ${archivedView ? "" : `data-toggle-project-fold="${p.id}" role="button" tabindex="0" aria-expanded="${expanded ? "true" : "false"}"`}>
             <div>
               <b>${escapeHtml(p.name)}</b>
-              <div class="meta">${p.start} 至 ${p.end} · 进度 ${p.progress}%${subMeta}${archivedView && p.archivedAt ? ` · 归档于 ${escapeHtml(String(p.archivedAt).replace("T", " ").replace(/\+08:00$/, ""))}` : ""}</div>
+              <div class="meta">${p.start} 至 ${p.end} · 进度 ${p.progress}%${archivedView && p.archivedAt ? ` · 归档于 ${escapeHtml(String(p.archivedAt).replace("T", " ").replace(/\+08:00$/, ""))}` : ""}</div>
             </div>
             <div class="project-row-actions">
+              ${foldHint}
               <span class="status ${statusClass(p.status)}">${p.status}</span>
-              ${!archivedView && p.status === "已完成" ? `<button class="btn tiny" data-archive-project="${p.id}" type="button">归档</button>` : ""}
-              ${archivedView ? `<button class="btn tiny" data-unarchive-project="${p.id}" type="button">取消归档</button>` : ""}
-              <button class="btn tiny" data-edit-project="${p.id}" type="button">编辑</button>
-              <button class="btn tiny danger" data-del-project="${p.id}" type="button">删除</button>
+              <span data-no-fold style="display:inline-flex;flex-wrap:wrap;gap:8px;align-items:center;">
+                ${!archivedView && p.status === "已完成" ? `<button class="btn tiny" data-archive-project="${p.id}" type="button">归档</button>` : ""}
+                ${archivedView ? `<button class="btn tiny" data-unarchive-project="${p.id}" type="button">取消归档</button>` : ""}
+                <button class="btn tiny" data-edit-project="${p.id}" type="button">编辑</button>
+                <button class="btn tiny danger" data-del-project="${p.id}" type="button">删除</button>
+              </span>
             </div>
           </div>
-          ${archivedView ? "" : renderSubtaskPanel(p)}
+          ${expanded ? renderSubtaskPanel(p) : ""}
         </div>
       `;
     }
@@ -1120,16 +1174,20 @@
         const barW = Math.max(wFor(p.start, p.end), 10);
         const progressW = barW * (p.progress / 100);
         const short = p.name.length > 9 ? `${escapeHtml(p.name.slice(0, 9))}…` : escapeHtml(p.name);
+        const tip = `点击管理子任务：${escapeHtml(p.name)}`;
         return `<g>
           <text x="12" y="${y + 16}" fill="#1c1915" font-size="13" font-family="inherit">${short}
             <title>${escapeHtml(p.name)}</title>
           </text>
-          <rect x="${x}" y="${y}" width="${barW}" height="22" rx="6" fill="${fills[p.status] || "#9ed0c5"}" />
-          <rect x="${x}" y="${y}" width="${progressW}" height="22" rx="6" fill="#0f6b5c" opacity="0.35" />
-          <text x="${x + 8}" y="${y + 15}" fill="#1c1915" font-size="11">${p.progress}%</text>
+          <g class="gantt-hit" data-gantt-project="${p.id}" tabindex="0" role="button" aria-label="${tip}">
+            <title>${tip}</title>
+            <rect x="${x}" y="${y}" width="${barW}" height="22" rx="6" fill="${fills[p.status] || "#9ed0c5"}" />
+            <rect x="${x}" y="${y}" width="${progressW}" height="22" rx="6" fill="#0f6b5c" opacity="0.35" />
+            <text x="${x + 8}" y="${y + 15}" fill="#1c1915" font-size="11">${p.progress}%</text>
+          </g>
         </g>`;
       }).join("");
-      return `<svg viewBox="0 0 ${width} ${height}" width="100%" role="img" aria-label="项目进度甘特图">
+      return `<svg viewBox="0 0 ${width} ${height}" width="100%" role="img" aria-label="项目进度甘特图，点击色条可编辑子任务">
         <rect width="${width}" height="${height}" fill="#fbf7f1" rx="14" />
         ${tickSvg}
         <line x1="${todayX}" x2="${todayX}" y1="${headH - 6}" y2="${height - 8}" stroke="#9f2d3a" stroke-dasharray="4 3" />
@@ -1240,11 +1298,37 @@
       `).join("") : `<div class="list-empty" style="margin:0 0 10px;">这一天还没有待办。</div>`;
     }
 
+    function fillSubtaskDialog(projectId) {
+      const dialog = $("subtaskDialog");
+      const p = state.projects.find((x) => x.id === projectId);
+      if (!dialog || !p) return false;
+      const subs = projectSubtasks(p);
+      const doneCount = subs.filter((s) => s.done).length;
+      $("subtaskDialogTitle").textContent = p.name;
+      $("subtaskDialogMeta").textContent = `${p.start} 至 ${p.end} · 进度 ${p.progress}% · ${p.status}`
+        + (subs.length ? ` · 子任务 ${doneCount}/${subs.length}` : " · 还没有子任务");
+      $("subtaskDialogBody").innerHTML = renderSubtaskPanel(p);
+      return true;
+    }
+    function openSubtaskDialog(projectId) {
+      if (!fillSubtaskDialog(projectId)) return;
+      subtaskDialogProjectId = projectId;
+      $("subtaskDialog").showModal();
+      focusSubtaskComposer(projectId);
+    }
+    function closeSubtaskDialog() {
+      subtaskDialogProjectId = null;
+      const dialog = $("subtaskDialog");
+      if (dialog?.open) dialog.close();
+    }
     function renderAll() {
       renderHeader();
       renderProjects();
       renderCalendar();
       renderDayPanels();
+      if (subtaskDialogProjectId && $("subtaskDialog")?.open) {
+        if (!fillSubtaskDialog(subtaskDialogProjectId)) closeSubtaskDialog();
+      }
     }
 
     function removeItem(kind, id) {
@@ -1453,11 +1537,20 @@
     }
 
     function focusSubtaskComposer(projectId) {
-      const input = document.querySelector(`[data-add-subtask="${projectId}"] input`);
+      const dialog = $("subtaskDialog");
+      const root = dialog?.open ? dialog : document;
+      const input = root.querySelector(`[data-add-subtask="${projectId}"] input`);
       if (input) {
         input.focus();
         input.select?.();
       }
+    }
+
+    function toggleProjectFold(projectId) {
+      if (!projectId) return;
+      if (expandedProjectIds.has(projectId)) expandedProjectIds.delete(projectId);
+      else expandedProjectIds.add(projectId);
+      renderProjects();
     }
 
     document.body.addEventListener("submit", (e) => {
@@ -1477,6 +1570,21 @@
       focusSubtaskComposer(projectId);
     });
 
+    $("closeSubtaskDialog").onclick = () => closeSubtaskDialog();
+    $("subtaskDialog").addEventListener("close", () => { subtaskDialogProjectId = null; });
+    $("ganttWrap").addEventListener("click", (e) => {
+      const hit = e.target.closest("[data-gantt-project]");
+      if (!hit) return;
+      openSubtaskDialog(hit.getAttribute("data-gantt-project"));
+    });
+    $("ganttWrap").addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const hit = e.target.closest("[data-gantt-project]");
+      if (!hit) return;
+      e.preventDefault();
+      openSubtaskDialog(hit.getAttribute("data-gantt-project"));
+    });
+
     document.body.addEventListener("click", (e) => {
       const editP = e.target.closest("[data-edit-project]");
       const delP = e.target.closest("[data-del-project]");
@@ -1485,6 +1593,7 @@
       const toggleS = e.target.closest("[data-toggle-subtask]");
       const editS = e.target.closest("[data-edit-subtask]");
       const delS = e.target.closest("[data-del-subtask]");
+      const foldRow = e.target.closest("[data-toggle-project-fold]");
       const editE = e.target.closest("[data-edit-event]");
       const delE = e.target.closest("[data-del-event]");
       const toggleT = e.target.closest("[data-toggle-todo]");
@@ -1503,6 +1612,10 @@
         setProjectArchived(id, true);
       } else if (unarchiveP) {
         setProjectArchived(unarchiveP.getAttribute("data-unarchive-project"), false);
+      } else if (foldRow) {
+        if (e.target.closest("button, a, input, select, textarea, label, [data-no-fold]")) return;
+        const id = foldRow.getAttribute("data-toggle-project-fold");
+        if (id) toggleProjectFold(id);
       } else if (toggleS) {
         const projectId = toggleS.getAttribute("data-toggle-subtask");
         const subId = toggleS.getAttribute("data-subtask-id");
@@ -1567,6 +1680,15 @@
       } else if (delT) {
         if (confirm("确定删除这条待办？")) removeItem("todos", delT.getAttribute("data-del-todo"));
       }
+    });
+
+    document.body.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const foldRow = e.target.closest("[data-toggle-project-fold]");
+      if (!foldRow || e.target.closest("button, a, input, select, textarea")) return;
+      e.preventDefault();
+      const id = foldRow.getAttribute("data-toggle-project-fold");
+      if (id) toggleProjectFold(id);
     });
 
     renderAll();
