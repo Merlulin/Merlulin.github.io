@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-26T19:18:50+08:00",
+  "updatedAt": "2026-11-26T19:19:04+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -17,8 +17,17 @@
       "name": "送教课程（WorkBuddy技能进阶）",
       "start": "2026-11-22",
       "end": "2026-12-07",
-      "progress": 10,
-      "status": "进行中"
+      "progress": 0,
+      "status": "进行中",
+      "subtasks": [
+        {
+          "id": "s-mwxgmc9s-1okk0e",
+          "text": "授课思路",
+          "done": false,
+          "updatedAt": "2026-11-26T19:19:04+08:00"
+        }
+      ],
+      "updatedAt": "2026-11-26T19:19:04+08:00"
     },
     {
       "id": "p-longwan-2027-spring",
