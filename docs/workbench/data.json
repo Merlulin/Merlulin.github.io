@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-26T19:19:04+08:00",
+  "updatedAt": "2026-11-26T19:19:07+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -25,9 +25,15 @@
           "text": "授课思路",
           "done": false,
           "updatedAt": "2026-11-26T19:19:04+08:00"
+        },
+        {
+          "id": "s-mwxgmee0-upnzoh",
+          "text": "课件制作",
+          "done": false,
+          "updatedAt": "2026-11-26T19:19:07+08:00"
         }
       ],
-      "updatedAt": "2026-11-26T19:19:04+08:00"
+      "updatedAt": "2026-11-26T19:19:07+08:00"
     },
     {
       "id": "p-longwan-2027-spring",
