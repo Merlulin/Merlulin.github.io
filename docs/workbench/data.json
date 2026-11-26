@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-26T15:37:38+08:00",
+  "updatedAt": "2026-11-26T15:38:03+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -328,6 +328,12 @@
       "text": "上课",
       "done": true,
       "updatedAt": "2026-11-26T14:29:00+08:00"
+    },
+    {
+      "id": "t-mwx8q3ou-6bie77",
+      "date": "2026-11-26",
+      "text": "月度工作情况填写",
+      "done": false
     }
   ],
   "deletedIds": [
