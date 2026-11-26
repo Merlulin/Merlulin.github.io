@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-26T15:25:04+08:00",
+  "updatedAt": "2026-11-26T15:29:59+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -7,7 +7,10 @@
       "start": "2026-11-20",
       "end": "2026-11-21",
       "progress": 100,
-      "status": "已完成"
+      "status": "已完成",
+      "archived": true,
+      "updatedAt": "2026-11-26T15:29:59+08:00",
+      "archivedAt": "2026-11-26T15:29:59+08:00"
     },
     {
       "id": "p-songjiao-20261207",
