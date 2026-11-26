@@ -171,6 +171,55 @@
     }
     .project-row b { font-weight: 600; }
     .project-row .meta { color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+    .project-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border-radius: 12px;
+      background: var(--paper-2);
+      overflow: hidden;
+    }
+    .project-card > .project-row {
+      background: transparent;
+      border-radius: 0;
+    }
+    .subtask-panel {
+      padding: 0 12px 12px;
+      border-top: 1px solid var(--line);
+    }
+    .subtask-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 8px 0 6px;
+      color: var(--ink-3);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .subtask-list { display: flex; flex-direction: column; gap: 6px; }
+    .subtask-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      background: var(--paper);
+    }
+    .subtask-row.done .subtask-text { color: var(--ink-3); text-decoration: line-through; }
+    .subtask-row .subtask-text { flex: 1; font-size: 13px; line-height: 1.4; padding-top: 1px; }
+    .subtask-panel .composer { margin-top: 8px; }
+    .subtask-panel .composer input { font-size: 13px; padding: 7px 10px; }
+    .field.locked input, .field.locked select {
+      background: #f3efe7;
+      color: var(--ink-3);
+      cursor: not-allowed;
+    }
+    .field-hint {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--ink-3);
+    }
     .archive-panel {
       margin: 0 18px 18px;
       border-top: 1px solid var(--line);
@@ -484,11 +533,12 @@
           <label for="pEnd">结束日期</label>
           <input id="pEnd" type="date" required />
         </div>
-        <div class="field">
+        <div class="field" id="pProgressField">
           <label for="pProgress">进度（0-100）</label>
           <input id="pProgress" type="number" min="0" max="100" value="0" required />
+          <div class="field-hint" id="pProgressHint" hidden>已有子任务时，进度由完成数自动计算。</div>
         </div>
-        <div class="field">
+        <div class="field" id="pStatusField">
           <label for="pStatus">状态</label>
           <select id="pStatus">
             <option>未开始</option>
@@ -496,6 +546,7 @@
             <option>已完成</option>
             <option>已暂停</option>
           </select>
+          <div class="field-hint" id="pStatusHint" hidden>全部子任务完成后会自动设为「已完成」。</div>
         </div>
       </div>
       <div class="error" id="projectError"></div>
@@ -786,6 +837,32 @@
       clearTimeout(pushTimer);
       pushTimer = setTimeout(() => { pushToCloud(); }, 600);
     }
+    function projectSubtasks(p) {
+      return Array.isArray(p?.subtasks) ? p.subtasks.filter((s) => s && s.id) : [];
+    }
+    function hasSubtasks(p) {
+      return projectSubtasks(p).length > 0;
+    }
+    function syncProjectFromSubtasks(project) {
+      if (!project) return project;
+      const subs = projectSubtasks(project);
+      if (!subs.length) {
+        const next = { ...project };
+        if (Array.isArray(project.subtasks) && project.subtasks.length === 0) next.subtasks = [];
+        return next;
+      }
+      const doneCount = subs.filter((s) => s.done).length;
+      const progress = Math.round((doneCount / subs.length) * 100);
+      let status = project.status || "未开始";
+      if (doneCount === subs.length) {
+        status = "已完成";
+      } else if (status === "已完成") {
+        status = doneCount === 0 ? "未开始" : "进行中";
+      } else if (status === "未开始" && doneCount > 0) {
+        status = "进行中";
+      }
+      return { ...project, subtasks: subs, progress, status };
+    }
     function mergeStores(cloud, local) {
       const deleted = new Set([...(cloud?.deletedIds || []), ...(local?.deletedIds || [])]);
       const mergeRecord = (prev, item) => {
@@ -793,7 +870,7 @@
         const winner = useItem ? item : prev;
         const other = useItem ? prev : item;
         const merged = { ...winner };
-        // Keep todo done / rewritten text if the winning revision omitted them.
+        // Keep todo / subtask done and rewritten text if the winning revision omitted them.
         if (merged.done == null && other.done != null) merged.done = other.done;
         if ((merged.text == null || merged.text === "") && other.text) merged.text = other.text;
         // Keep project archive state; prefer the side with the newer archivedAt.
@@ -805,6 +882,10 @@
         } else if (merged.archived == null && other.archived != null) {
           merged.archived = other.archived;
           if (other.archivedAt != null) merged.archivedAt = other.archivedAt;
+        }
+        // Merge nested project subtasks by id; preserve done flags on conflict.
+        if (Array.isArray(winner.subtasks) || Array.isArray(other.subtasks)) {
+          merged.subtasks = mergeList(winner.subtasks || [], other.subtasks || []);
         }
         return merged;
       };
@@ -826,7 +907,7 @@
       const second = cloudFirst ? local : cloud;
       return {
         updatedAt: cloudTime >= localTime ? cloudTime : localTime,
-        projects: mergeList(first?.projects, second?.projects),
+        projects: mergeList(first?.projects, second?.projects).map(syncProjectFromSubtasks),
         events: mergeList(first?.events, second?.events),
         todos: mergeList(first?.todos, second?.todos),
         deletedIds: [...deleted]
@@ -928,22 +1009,59 @@
         list.innerHTML = `<div class="list-empty">${archived.length ? "当前项目都已归档。可在下方「项目归档」中恢复。" : "还没有项目。添加后会在这里看到甘特图。"}</div>`;
       } else {
         wrap.innerHTML = renderGantt(items);
-        list.innerHTML = items.map((p) => `
+        list.innerHTML = items.map((p) => renderProjectCard(p)).join("");
+      }
+      renderArchive(archived);
+    }
+
+    function renderSubtaskPanel(p) {
+      const subs = projectSubtasks(p);
+      const doneCount = subs.filter((s) => s.done).length;
+      const rows = subs.length ? subs.map((s) => `
+        <div class="subtask-row ${s.done ? "done" : ""}">
+          <button class="check ${s.done ? "on" : ""}" data-toggle-subtask="${p.id}" data-subtask-id="${s.id}" type="button" aria-label="标记子任务完成">${s.done ? "✓" : ""}</button>
+          <div class="subtask-text">${escapeHtml(s.text || "")}</div>
+          <button class="btn tiny" data-edit-subtask="${p.id}" data-subtask-id="${s.id}" type="button">编辑</button>
+          <button class="btn tiny danger" data-del-subtask="${p.id}" data-subtask-id="${s.id}" type="button">删除</button>
+        </div>
+      `).join("") : `<div class="list-empty" style="margin:0;padding:10px;font-size:12px;">还没有子任务，可在下方逐条添加。</div>`;
+      return `
+        <div class="subtask-panel">
+          <div class="subtask-head">
+            <span>子任务</span>
+            <span>${subs.length ? `${doneCount}/${subs.length} 已完成` : "可拆成几步做"}</span>
+          </div>
+          <div class="subtask-list">${rows}</div>
+          <form class="composer" data-add-subtask="${p.id}">
+            <input name="subtaskText" placeholder="添加一条子任务，按回车保存" autocomplete="off" />
+            <button class="btn tiny primary" type="submit">添加</button>
+          </form>
+        </div>
+      `;
+    }
+
+    function renderProjectCard(p, options = {}) {
+      const archivedView = !!options.archivedView;
+      const subs = projectSubtasks(p);
+      const subMeta = hasSubtasks(p) ? ` · 子任务 ${subs.filter((s) => s.done).length}/${subs.length}` : "";
+      return `
+        <div class="project-card" data-project-card="${p.id}">
           <div class="project-row">
             <div>
               <b>${escapeHtml(p.name)}</b>
-              <div class="meta">${p.start} 至 ${p.end} · 进度 ${p.progress}%</div>
+              <div class="meta">${p.start} 至 ${p.end} · 进度 ${p.progress}%${subMeta}${archivedView && p.archivedAt ? ` · 归档于 ${escapeHtml(String(p.archivedAt).replace("T", " ").replace(/\+08:00$/, ""))}` : ""}</div>
             </div>
             <div class="project-row-actions">
               <span class="status ${statusClass(p.status)}">${p.status}</span>
-              ${p.status === "已完成" ? `<button class="btn tiny" data-archive-project="${p.id}" type="button">归档</button>` : ""}
+              ${!archivedView && p.status === "已完成" ? `<button class="btn tiny" data-archive-project="${p.id}" type="button">归档</button>` : ""}
+              ${archivedView ? `<button class="btn tiny" data-unarchive-project="${p.id}" type="button">取消归档</button>` : ""}
               <button class="btn tiny" data-edit-project="${p.id}" type="button">编辑</button>
               <button class="btn tiny danger" data-del-project="${p.id}" type="button">删除</button>
             </div>
           </div>
-        `).join("");
-      }
-      renderArchive(archived);
+          ${archivedView ? "" : renderSubtaskPanel(p)}
+        </div>
+      `;
     }
 
     function renderArchive(archived) {
@@ -961,20 +1079,7 @@
             <span class="archive-hint">${archived.length} 个已归档项目 · 点击展开</span>
           </summary>
           <div class="archive-list">
-            ${archived.map((p) => `
-              <div class="project-row">
-                <div>
-                  <b>${escapeHtml(p.name)}</b>
-                  <div class="meta">${p.start} 至 ${p.end} · 进度 ${p.progress}%${p.archivedAt ? ` · 归档于 ${escapeHtml(String(p.archivedAt).replace("T", " ").replace(/\+08:00$/, ""))}` : ""}</div>
-                </div>
-                <div class="project-row-actions">
-                  <span class="status ${statusClass(p.status)}">${p.status}</span>
-                  <button class="btn tiny" data-unarchive-project="${p.id}" type="button">取消归档</button>
-                  <button class="btn tiny" data-edit-project="${p.id}" type="button">编辑</button>
-                  <button class="btn tiny danger" data-del-project="${p.id}" type="button">删除</button>
-                </div>
-              </div>
-            `).join("")}
+            ${archived.map((p) => renderProjectCard(p, { archivedView: true })).join("")}
           </div>
         </details>
       `;
@@ -1218,32 +1323,59 @@
     });
     window.addEventListener("scroll", () => $("hovercard").classList.remove("show"), { passive: true });
 
-    $("addProjectBtn").onclick = () => {
-      editingProjectId = null;
-      $("projectDialogTitle").textContent = "添加项目";
-      $("pName").value = "";
-      $("pStart").value = todayIso();
-      $("pEnd").value = todayIso();
-      $("pProgress").value = "0";
-      $("pStatus").value = "进行中";
+    function setProjectProgressLocked(locked, project) {
+      $("pProgress").disabled = !!locked;
+      $("pStatus").disabled = !!locked;
+      $("pProgressField").classList.toggle("locked", !!locked);
+      $("pStatusField").classList.toggle("locked", !!locked);
+      $("pProgressHint").hidden = !locked;
+      $("pStatusHint").hidden = !locked;
+      if (locked && project) {
+        $("pProgress").value = String(project.progress);
+        $("pStatus").value = project.status;
+      }
+    }
+    function openProjectDialog(project) {
+      editingProjectId = project ? project.id : null;
+      $("projectDialogTitle").textContent = project ? "编辑项目" : "添加项目";
+      $("pName").value = project ? project.name : "";
+      $("pStart").value = project ? project.start : todayIso();
+      $("pEnd").value = project ? project.end : todayIso();
+      $("pProgress").value = String(project ? project.progress : 0);
+      $("pStatus").value = project ? project.status : "进行中";
       $("projectError").textContent = "";
+      setProjectProgressLocked(project ? hasSubtasks(project) : false, project);
       $("projectDialog").showModal();
-    };
+    }
+    $("addProjectBtn").onclick = () => openProjectDialog(null);
     $("cancelProject").onclick = () => $("projectDialog").close();
     $("projectForm").addEventListener("submit", (e) => {
       e.preventDefault();
       const name = $("pName").value.trim();
       const start = $("pStart").value;
       const end = $("pEnd").value;
+      const prev = editingProjectId ? state.projects.find((p) => p.id === editingProjectId) : null;
+      const locked = prev ? hasSubtasks(prev) : false;
       const progress = Number($("pProgress").value);
       if (!name) { $("projectError").textContent = "请填写项目名称。"; return; }
       if (!start || !end) { $("projectError").textContent = "请填写开始和结束日期。"; return; }
       if (end < start) { $("projectError").textContent = "结束日期不能早于开始日期。"; return; }
-      if (!Number.isFinite(progress) || progress < 0 || progress > 100) { $("projectError").textContent = "进度请填写 0 到 100。"; return; }
-      const prev = editingProjectId ? state.projects.find((p) => p.id === editingProjectId) : null;
-      const next = { id: editingProjectId || newId("p"), name, start, end, progress: Math.round(progress), status: $("pStatus").value };
+      if (!locked && (!Number.isFinite(progress) || progress < 0 || progress > 100)) {
+        $("projectError").textContent = "进度请填写 0 到 100。";
+        return;
+      }
+      let next = {
+        id: editingProjectId || newId("p"),
+        name,
+        start,
+        end,
+        progress: locked ? prev.progress : Math.round(progress),
+        status: locked ? prev.status : $("pStatus").value
+      };
       if (prev && prev.archived != null) next.archived = prev.archived;
       if (prev && prev.archivedAt) next.archivedAt = prev.archivedAt;
+      if (prev && Array.isArray(prev.subtasks)) next.subtasks = prev.subtasks.map((s) => ({ ...s }));
+      next = syncProjectFromSubtasks(next);
       if (editingProjectId) state.projects = state.projects.map((p) => p.id === editingProjectId ? next : p);
       else state.projects.push(next);
       saveStore(next);
@@ -1307,11 +1439,52 @@
       renderAll();
     }
 
+    function updateProjectById(id, updater) {
+      let touched = null;
+      state.projects = state.projects.map((p) => {
+        if (p.id !== id) return p;
+        touched = syncProjectFromSubtasks(updater({ ...p, subtasks: projectSubtasks(p).map((s) => ({ ...s })) }));
+        return touched;
+      });
+      if (!touched) return null;
+      saveStore(touched);
+      renderAll();
+      return touched;
+    }
+
+    function focusSubtaskComposer(projectId) {
+      const input = document.querySelector(`[data-add-subtask="${projectId}"] input`);
+      if (input) {
+        input.focus();
+        input.select?.();
+      }
+    }
+
+    document.body.addEventListener("submit", (e) => {
+      const form = e.target.closest("[data-add-subtask]");
+      if (!form) return;
+      e.preventDefault();
+      const projectId = form.getAttribute("data-add-subtask");
+      const input = form.querySelector("input");
+      const text = (input?.value || "").trim();
+      if (!text) return;
+      const stamp = nowStamp();
+      updateProjectById(projectId, (p) => {
+        const subtasks = projectSubtasks(p);
+        subtasks.push({ id: newId("s"), text, done: false, updatedAt: stamp });
+        return { ...p, subtasks };
+      });
+      focusSubtaskComposer(projectId);
+    });
+
     document.body.addEventListener("click", (e) => {
       const editP = e.target.closest("[data-edit-project]");
       const delP = e.target.closest("[data-del-project]");
       const archiveP = e.target.closest("[data-archive-project]");
       const unarchiveP = e.target.closest("[data-unarchive-project]");
+      const toggleS = e.target.closest("[data-toggle-subtask]");
+      const editS = e.target.closest("[data-edit-subtask]");
+      const delS = e.target.closest("[data-del-subtask]");
       const editE = e.target.closest("[data-edit-event]");
       const delE = e.target.closest("[data-del-event]");
       const toggleT = e.target.closest("[data-toggle-todo]");
@@ -1320,15 +1493,7 @@
       if (editP) {
         const p = state.projects.find((x) => x.id === editP.getAttribute("data-edit-project"));
         if (!p) return;
-        editingProjectId = p.id;
-        $("projectDialogTitle").textContent = "编辑项目";
-        $("pName").value = p.name;
-        $("pStart").value = p.start;
-        $("pEnd").value = p.end;
-        $("pProgress").value = String(p.progress);
-        $("pStatus").value = p.status;
-        $("projectError").textContent = "";
-        $("projectDialog").showModal();
+        openProjectDialog(p);
       } else if (delP) {
         if (confirm("确定删除这个项目？")) removeItem("projects", delP.getAttribute("data-del-project"));
       } else if (archiveP) {
@@ -1338,6 +1503,38 @@
         setProjectArchived(id, true);
       } else if (unarchiveP) {
         setProjectArchived(unarchiveP.getAttribute("data-unarchive-project"), false);
+      } else if (toggleS) {
+        const projectId = toggleS.getAttribute("data-toggle-subtask");
+        const subId = toggleS.getAttribute("data-subtask-id");
+        const stamp = nowStamp();
+        updateProjectById(projectId, (p) => ({
+          ...p,
+          subtasks: projectSubtasks(p).map((s) => s.id === subId ? { ...s, done: !s.done, updatedAt: stamp } : s)
+        }));
+      } else if (editS) {
+        const projectId = editS.getAttribute("data-edit-subtask");
+        const subId = editS.getAttribute("data-subtask-id");
+        const p = state.projects.find((x) => x.id === projectId);
+        const sub = projectSubtasks(p).find((s) => s.id === subId);
+        if (!sub) return;
+        const next = prompt("编辑子任务", sub.text || "");
+        if (next == null) return;
+        const text = next.trim();
+        if (!text) return;
+        const stamp = nowStamp();
+        updateProjectById(projectId, (proj) => ({
+          ...proj,
+          subtasks: projectSubtasks(proj).map((s) => s.id === subId ? { ...s, text, updatedAt: stamp } : s)
+        }));
+      } else if (delS) {
+        if (!confirm("确定删除这条子任务？")) return;
+        const projectId = delS.getAttribute("data-del-subtask");
+        const subId = delS.getAttribute("data-subtask-id");
+        if (subId && !state.deletedIds.includes(subId)) state.deletedIds.push(subId);
+        updateProjectById(projectId, (p) => ({
+          ...p,
+          subtasks: projectSubtasks(p).filter((s) => s.id !== subId)
+        }));
       } else if (editE) {
         const ev = state.events.find((x) => x.id === editE.getAttribute("data-edit-event"));
         if (!ev) return;
