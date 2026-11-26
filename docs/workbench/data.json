@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-26T19:18:34+08:00",
+  "updatedAt": "2026-11-26T19:18:41+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -25,8 +25,17 @@
       "name": "龙湾师资培训27年春季方案（分学科）",
       "start": "2026-11-17",
       "end": "2026-11-26",
-      "progress": 75,
-      "status": "进行中"
+      "progress": 0,
+      "status": "进行中",
+      "subtasks": [
+        {
+          "id": "s-mwxglu70-9z5crb",
+          "text": "语文",
+          "done": false,
+          "updatedAt": "2026-11-26T19:18:41+08:00"
+        }
+      ],
+      "updatedAt": "2026-11-26T19:18:41+08:00"
     },
     {
       "id": "p-huang-ppt-202611",
