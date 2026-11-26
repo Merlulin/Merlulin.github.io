@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-26T16:33:37+08:00",
+  "updatedAt": "2026-11-26T19:18:02+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -33,8 +33,17 @@
       "name": "黄书记的PPT",
       "start": "2026-11-09",
       "end": "2026-11-30",
-      "progress": 40,
-      "status": "进行中"
+      "progress": 0,
+      "status": "进行中",
+      "subtasks": [
+        {
+          "id": "s-mwxgl0g8-9ruj57",
+          "text": "第一章",
+          "done": false,
+          "updatedAt": "2026-11-26T19:18:02+08:00"
+        }
+      ],
+      "updatedAt": "2026-11-26T19:18:02+08:00"
     },
     {
       "id": "p-mwx8pksu-3tpyh0",
