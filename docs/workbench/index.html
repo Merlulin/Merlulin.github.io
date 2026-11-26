@@ -155,15 +155,48 @@
     .project-list { padding: 0 18px 18px; display: flex; flex-direction: column; gap: 8px; }
     .project-row {
       display: grid;
-      grid-template-columns: 1fr auto auto auto;
+      grid-template-columns: 1fr auto;
       gap: 12px;
       align-items: center;
       padding: 10px 12px;
       border-radius: 12px;
       background: var(--paper-2);
     }
+    .project-row-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+    }
     .project-row b { font-weight: 600; }
     .project-row .meta { color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+    .archive-panel {
+      margin: 0 18px 18px;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+    }
+    .archive-panel summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--ink-2);
+      font-size: 14px;
+      font-weight: 600;
+      user-select: none;
+    }
+    .archive-panel summary::-webkit-details-marker { display: none; }
+    .archive-panel summary .archive-hint {
+      color: var(--ink-3);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .archive-panel[open] summary { margin-bottom: 10px; }
+    .archive-list { display: flex; flex-direction: column; gap: 8px; }
+    .archive-list .project-row { opacity: 0.92; }
     .status {
       display: inline-flex;
       align-items: center;
@@ -387,6 +420,7 @@
       </div>
       <div class="gantt-wrap" id="ganttWrap"></div>
       <div class="project-list" id="projectList"></div>
+      <div id="archivePanel"></div>
     </section>
 
     <div class="grid-main">
@@ -754,6 +788,26 @@
     }
     function mergeStores(cloud, local) {
       const deleted = new Set([...(cloud?.deletedIds || []), ...(local?.deletedIds || [])]);
+      const mergeRecord = (prev, item) => {
+        const useItem = (item.updatedAt || "") > (prev.updatedAt || "");
+        const winner = useItem ? item : prev;
+        const other = useItem ? prev : item;
+        const merged = { ...winner };
+        // Keep todo done / rewritten text if the winning revision omitted them.
+        if (merged.done == null && other.done != null) merged.done = other.done;
+        if ((merged.text == null || merged.text === "") && other.text) merged.text = other.text;
+        // Keep project archive state; prefer the side with the newer archivedAt.
+        if ((other.archivedAt || "") > (merged.archivedAt || "")) {
+          if (other.archived != null) {
+            merged.archived = other.archived;
+            merged.archivedAt = other.archivedAt;
+          }
+        } else if (merged.archived == null && other.archived != null) {
+          merged.archived = other.archived;
+          if (other.archivedAt != null) merged.archivedAt = other.archivedAt;
+        }
+        return merged;
+      };
       const mergeList = (baseList, otherList) => {
         const map = new Map();
         for (const item of baseList || []) if (item && item.id && !deleted.has(item.id)) map.set(item.id, item);
@@ -761,7 +815,7 @@
           if (!item || !item.id || deleted.has(item.id)) continue;
           const prev = map.get(item.id);
           if (!prev) map.set(item.id, item);
-          else if ((item.updatedAt || "") > (prev.updatedAt || "")) map.set(item.id, item);
+          else map.set(item.id, mergeRecord(prev, item));
         }
         return [...map.values()];
       };
@@ -841,8 +895,17 @@
     let editingEventId = null;
     let hoverTimer = 0;
 
+    const isArchived = (p) => !!p && p.archived === true;
+    const sortProjects = (list) => list.slice().sort((a, b) => a.start === b.start ? a.name.localeCompare(b.name, "zh-Hans") : a.start < b.start ? -1 : 1);
+    function activeProjects() {
+      return sortProjects(state.projects.filter((p) => !isArchived(p)));
+    }
+    function archivedProjects() {
+      return sortProjects(state.projects.filter(isArchived));
+    }
+
     function itemsOnDate(iso) {
-      const projects = state.projects.filter((p) => p.start <= iso && iso <= p.end);
+      const projects = activeProjects().filter((p) => p.start <= iso && iso <= p.end);
       const events = state.events.filter((e) => e.date === iso).sort((a, b) => a.start - b.start);
       const todos = state.todos.filter((t) => t.date === iso).sort((a, b) => Number(a.done) - Number(b.done));
       return { projects, events, todos };
@@ -855,25 +918,66 @@
     function renderProjects() {
       const list = $("projectList");
       const wrap = $("ganttWrap");
-      const items = state.projects.slice().sort((a, b) => a.start === b.start ? a.name.localeCompare(b.name, "zh-Hans") : a.start < b.start ? -1 : 1);
-      $("projectSummary").textContent = items.length ? `共 ${items.length} 个项目` : "还没有项目，点击右上角添加";
+      const items = activeProjects();
+      const archived = archivedProjects();
+      $("projectSummary").textContent = items.length
+        ? `共 ${items.length} 个项目${archived.length ? ` · 已归档 ${archived.length} 个` : ""}`
+        : (archived.length ? `没有进行中的项目 · 已归档 ${archived.length} 个` : "还没有项目，点击右上角添加");
       if (!items.length) {
         wrap.innerHTML = "";
-        list.innerHTML = `<div class="list-empty">还没有项目。添加后会在这里看到甘特图。</div>`;
+        list.innerHTML = `<div class="list-empty">${archived.length ? "当前项目都已归档。可在下方「项目归档」中恢复。" : "还没有项目。添加后会在这里看到甘特图。"}</div>`;
+      } else {
+        wrap.innerHTML = renderGantt(items);
+        list.innerHTML = items.map((p) => `
+          <div class="project-row">
+            <div>
+              <b>${escapeHtml(p.name)}</b>
+              <div class="meta">${p.start} 至 ${p.end} · 进度 ${p.progress}%</div>
+            </div>
+            <div class="project-row-actions">
+              <span class="status ${statusClass(p.status)}">${p.status}</span>
+              ${p.status === "已完成" ? `<button class="btn tiny" data-archive-project="${p.id}" type="button">归档</button>` : ""}
+              <button class="btn tiny" data-edit-project="${p.id}" type="button">编辑</button>
+              <button class="btn tiny danger" data-del-project="${p.id}" type="button">删除</button>
+            </div>
+          </div>
+        `).join("");
+      }
+      renderArchive(archived);
+    }
+
+    function renderArchive(archived) {
+      const panel = $("archivePanel");
+      if (!panel) return;
+      if (!archived.length) {
+        panel.innerHTML = "";
         return;
       }
-      wrap.innerHTML = renderGantt(items);
-      list.innerHTML = items.map((p) => `
-        <div class="project-row">
-          <div>
-            <b>${escapeHtml(p.name)}</b>
-            <div class="meta">${p.start} 至 ${p.end} · 进度 ${p.progress}%</div>
+      const open = panel.querySelector("details")?.open ? " open" : "";
+      panel.innerHTML = `
+        <details class="archive-panel"${open}>
+          <summary>
+            <span>项目归档</span>
+            <span class="archive-hint">${archived.length} 个已归档项目 · 点击展开</span>
+          </summary>
+          <div class="archive-list">
+            ${archived.map((p) => `
+              <div class="project-row">
+                <div>
+                  <b>${escapeHtml(p.name)}</b>
+                  <div class="meta">${p.start} 至 ${p.end} · 进度 ${p.progress}%${p.archivedAt ? ` · 归档于 ${escapeHtml(String(p.archivedAt).replace("T", " ").replace(/\+08:00$/, ""))}` : ""}</div>
+                </div>
+                <div class="project-row-actions">
+                  <span class="status ${statusClass(p.status)}">${p.status}</span>
+                  <button class="btn tiny" data-unarchive-project="${p.id}" type="button">取消归档</button>
+                  <button class="btn tiny" data-edit-project="${p.id}" type="button">编辑</button>
+                  <button class="btn tiny danger" data-del-project="${p.id}" type="button">删除</button>
+                </div>
+              </div>
+            `).join("")}
           </div>
-          <span class="status ${statusClass(p.status)}">${p.status}</span>
-          <button class="btn tiny" data-edit-project="${p.id}" type="button">编辑</button>
-          <button class="btn tiny danger" data-del-project="${p.id}" type="button">删除</button>
-        </div>
-      `).join("");
+        </details>
+      `;
     }
 
     function renderGantt(projects) {
@@ -1136,10 +1240,13 @@
       if (!start || !end) { $("projectError").textContent = "请填写开始和结束日期。"; return; }
       if (end < start) { $("projectError").textContent = "结束日期不能早于开始日期。"; return; }
       if (!Number.isFinite(progress) || progress < 0 || progress > 100) { $("projectError").textContent = "进度请填写 0 到 100。"; return; }
+      const prev = editingProjectId ? state.projects.find((p) => p.id === editingProjectId) : null;
       const next = { id: editingProjectId || newId("p"), name, start, end, progress: Math.round(progress), status: $("pStatus").value };
+      if (prev && prev.archived != null) next.archived = prev.archived;
+      if (prev && prev.archivedAt) next.archivedAt = prev.archivedAt;
       if (editingProjectId) state.projects = state.projects.map((p) => p.id === editingProjectId ? next : p);
       else state.projects.push(next);
-      saveStore();
+      saveStore(next);
       $("projectDialog").close();
       renderAll();
     });
@@ -1184,9 +1291,27 @@
       renderAll();
     });
 
+    function setProjectArchived(id, archived) {
+      let touched = null;
+      state.projects = state.projects.map((p) => {
+        if (p.id !== id) return p;
+        touched = { ...p, archived: !!archived };
+        return touched;
+      });
+      if (!touched) return;
+      const stamp = nowStamp();
+      state.updatedAt = stamp;
+      touched.updatedAt = stamp;
+      touched.archivedAt = stamp;
+      saveStore(touched, { keepStamp: true });
+      renderAll();
+    }
+
     document.body.addEventListener("click", (e) => {
       const editP = e.target.closest("[data-edit-project]");
       const delP = e.target.closest("[data-del-project]");
+      const archiveP = e.target.closest("[data-archive-project]");
+      const unarchiveP = e.target.closest("[data-unarchive-project]");
       const editE = e.target.closest("[data-edit-event]");
       const delE = e.target.closest("[data-del-event]");
       const toggleT = e.target.closest("[data-toggle-todo]");
@@ -1206,6 +1331,13 @@
         $("projectDialog").showModal();
       } else if (delP) {
         if (confirm("确定删除这个项目？")) removeItem("projects", delP.getAttribute("data-del-project"));
+      } else if (archiveP) {
+        const id = archiveP.getAttribute("data-archive-project");
+        const p = state.projects.find((x) => x.id === id);
+        if (!p || p.status !== "已完成" || isArchived(p)) return;
+        setProjectArchived(id, true);
+      } else if (unarchiveP) {
+        setProjectArchived(unarchiveP.getAttribute("data-unarchive-project"), false);
       } else if (editE) {
         const ev = state.events.find((x) => x.id === editE.getAttribute("data-edit-event"));
         if (!ev) return;
