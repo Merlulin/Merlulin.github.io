@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-27T16:30:48+08:00",
+  "updatedAt": "2026-11-27T16:30:50+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -46,7 +46,7 @@
       "name": "龙湾师资培训27年春季方案（分学科）",
       "start": "2026-11-17",
       "end": "2026-11-26",
-      "progress": 0,
+      "progress": 33,
       "status": "进行中",
       "subtasks": [
         {
@@ -76,17 +76,17 @@
         {
           "id": "s-mwxglz0e-uppvo0",
           "text": "信息技术",
-          "done": false,
-          "updatedAt": "2026-11-27T16:30:48+08:00"
+          "done": true,
+          "updatedAt": "2026-11-27T16:30:50+08:00"
         },
         {
           "id": "s-mwxgm0z9-xab9rn",
           "text": "领航学校",
-          "done": false,
-          "updatedAt": "2026-11-27T16:30:47+08:00"
+          "done": true,
+          "updatedAt": "2026-11-27T16:30:50+08:00"
         }
       ],
-      "updatedAt": "2026-11-27T16:30:48+08:00"
+      "updatedAt": "2026-11-27T16:30:50+08:00"
     },
     {
       "id": "p-huang-ppt-202611",
