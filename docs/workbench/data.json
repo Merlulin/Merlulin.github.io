@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-27T14:32:06+08:00",
+  "updatedAt": "2026-11-27T16:23:24+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -494,6 +494,12 @@
       "id": "t-mwyko9i0-jj5mbp",
       "date": "2026-11-27",
       "text": "学科方案优化",
+      "done": false
+    },
+    {
+      "id": "t-mwyps9x6-n9wd1s",
+      "date": "2026-11-27",
+      "text": "宣传侧优化",
       "done": false
     }
   ],
