@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-27T16:30:15+08:00",
+  "updatedAt": "2026-11-27T16:30:23+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -506,6 +506,12 @@
       "id": "t-mwyq12y4-lu9k4z",
       "date": "2026-11-28",
       "text": "领航学校方案优化",
+      "done": false
+    },
+    {
+      "id": "t-mwyq19eb-oi4lnh",
+      "date": "2026-11-28",
+      "text": "语文学科方案优化",
       "done": false
     }
   ],
