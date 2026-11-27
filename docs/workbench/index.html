@@ -409,9 +409,68 @@
       border-radius: 12px;
       background: var(--paper-2);
       margin-bottom: 8px;
+      position: relative;
     }
     .todo-row.done .todo-text { color: var(--ink-3); text-decoration: line-through; }
     .todo-row .todo-text, .event-row .event-text { flex: 1; }
+    .todo-row.draggable { user-select: none; }
+    .todo-drag {
+      width: 22px;
+      height: 22px;
+      flex: 0 0 22px;
+      margin-top: 0;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--ink-3);
+      cursor: grab;
+      touch-action: none;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      font-size: 14px;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+    .todo-drag:hover { background: rgba(15, 107, 92, 0.08); color: var(--teal-deep); }
+    .todo-drag:active, .todo-row.dragging .todo-drag { cursor: grabbing; }
+    .todo-row.dragging {
+      opacity: 0.55;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(40, 32, 20, 0.12);
+      z-index: 2;
+    }
+    .todo-row.drag-insert-before::before,
+    .todo-row.drag-insert-after::after {
+      content: "";
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--teal);
+      pointer-events: none;
+      z-index: 3;
+    }
+    .todo-row.drag-insert-before::before { top: -5px; }
+    .todo-row.drag-insert-after::after { bottom: -5px; }
+    .todo-drag-ghost {
+      position: fixed;
+      z-index: 80;
+      pointer-events: none;
+      opacity: 0.92;
+      box-shadow: var(--shadow-hover);
+      border-radius: 12px;
+      background: #fff;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--ink);
+      max-width: min(360px, 70vw);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border: 1px solid var(--line-strong);
+    }
     .event-time { color: var(--teal-deep); font-size: 12px; font-weight: 600; min-width: 92px; }
     .check {
       width: 18px; height: 18px; border-radius: 5px;
@@ -913,6 +972,16 @@
         // Keep todo / subtask done and rewritten text if the winning revision omitted them.
         if (merged.done == null && other.done != null) merged.done = other.done;
         if ((merged.text == null || merged.text === "") && other.text) merged.text = other.text;
+        // Keep todo order; prefer the side with the newer orderAt.
+        if ((other.orderAt || "") > (merged.orderAt || "")) {
+          if (other.order != null) {
+            merged.order = other.order;
+            merged.orderAt = other.orderAt;
+          }
+        } else if (merged.order == null && other.order != null) {
+          merged.order = other.order;
+          if (other.orderAt != null) merged.orderAt = other.orderAt;
+        }
         // Keep project archive state; prefer the side with the newer archivedAt.
         if ((other.archivedAt || "") > (merged.archivedAt || "")) {
           if (other.archived != null) {
@@ -1027,10 +1096,44 @@
       return sortProjects(state.projects.filter(isArchived));
     }
 
+    function sortTodosForDay(list) {
+      const indexed = list.map((t, i) => ({ t, i }));
+      indexed.sort((a, b) => {
+        const da = Number(!!a.t.done);
+        const db = Number(!!b.t.done);
+        if (da !== db) return da - db;
+        if (!a.t.done && !b.t.done) {
+          const oa = Number.isFinite(a.t.order) ? a.t.order : a.i + 1e9;
+          const ob = Number.isFinite(b.t.order) ? b.t.order : b.i + 1e9;
+          if (oa !== ob) return oa - ob;
+        }
+        return a.i - b.i;
+      });
+      return indexed.map((x) => x.t);
+    }
+    function ensureDayTodoOrders(date) {
+      const open = sortTodosForDay(state.todos.filter((t) => t.date === date && !t.done));
+      if (!open.length || open.every((t) => Number.isFinite(t.order))) return false;
+      const stamp = nowStamp();
+      const orderMap = new Map(open.map((t, i) => [t.id, i]));
+      state.todos = state.todos.map((t) => {
+        if (!orderMap.has(t.id)) return t;
+        if (Number.isFinite(t.order)) return t;
+        return { ...t, order: orderMap.get(t.id), orderAt: t.orderAt || stamp };
+      });
+      return true;
+    }
+    function nextTodoOrder(date) {
+      ensureDayTodoOrders(date);
+      const open = state.todos.filter((t) => t.date === date && !t.done);
+      const orders = open.map((t) => t.order).filter((n) => Number.isFinite(n));
+      if (orders.length) return Math.max(...orders) + 1;
+      return open.length;
+    }
     function itemsOnDate(iso) {
       const projects = activeProjects().filter((p) => p.start <= iso && iso <= p.end);
       const events = state.events.filter((e) => e.date === iso).sort((a, b) => a.start - b.start);
-      const todos = state.todos.filter((t) => t.date === iso).sort((a, b) => Number(a.done) - Number(b.done));
+      const todos = sortTodosForDay(state.todos.filter((t) => t.date === iso));
       return { projects, events, todos };
     }
 
@@ -1289,7 +1392,8 @@
         </div>
       `).join("") : `<div class="list-empty" style="margin:0 0 10px;">这一天还没有日程。</div>`;
       $("todoList").innerHTML = todos.length ? todos.map((t) => `
-        <div class="todo-row ${t.done ? "done" : ""}">
+        <div class="todo-row ${t.done ? "done" : "draggable"}" data-todo-id="${t.id}" ${t.done ? "" : 'data-todo-open="1"'}>
+          ${t.done ? "" : `<button class="todo-drag" type="button" data-todo-drag-handle="${t.id}" aria-label="拖动调整顺序" title="拖动调整顺序">⋮⋮</button>`}
           <button class="check ${t.done ? "on" : ""}" data-toggle-todo="${t.id}" type="button" aria-label="标记完成">${t.done ? "✓" : ""}</button>
           <div class="todo-text">${escapeHtml(t.text)}</div>
           <button class="btn tiny" data-edit-todo="${t.id}" type="button">编辑</button>
@@ -1501,7 +1605,15 @@
       e.preventDefault();
       const text = $("todoInput").value.trim();
       if (!text) return;
-      state.todos.push({ id: newId("t"), date: selectedDate, text, done: false });
+      const stamp = nowStamp();
+      state.todos.push({
+        id: newId("t"),
+        date: selectedDate,
+        text,
+        done: false,
+        order: nextTodoOrder(selectedDate),
+        orderAt: stamp
+      });
       $("todoInput").value = "";
       saveStore();
       renderAll();
@@ -1552,6 +1664,152 @@
       else expandedProjectIds.add(projectId);
       renderProjects();
     }
+
+    const todoDrag = {
+      active: false,
+      moved: false,
+      id: null,
+      startY: 0,
+      pointerId: null,
+      ghost: null,
+      insertBeforeId: null,
+      insertAfter: false
+    };
+
+    function clearTodoDragMarks() {
+      document.querySelectorAll(".todo-row.dragging, .todo-row.drag-insert-before, .todo-row.drag-insert-after").forEach((el) => {
+        el.classList.remove("dragging", "drag-insert-before", "drag-insert-after");
+      });
+    }
+
+    function removeTodoGhost() {
+      if (todoDrag.ghost) {
+        todoDrag.ghost.remove();
+        todoDrag.ghost = null;
+      }
+    }
+
+    function openTodoRows() {
+      return [...document.querySelectorAll('#todoList .todo-row[data-todo-open="1"]')];
+    }
+
+    function updateTodoDragIndicator(clientY) {
+      const rows = openTodoRows().filter((row) => row.getAttribute("data-todo-id") !== todoDrag.id);
+      clearTodoDragMarks();
+      const dragging = document.querySelector(`#todoList .todo-row[data-todo-id="${todoDrag.id}"]`);
+      if (dragging) dragging.classList.add("dragging");
+      if (!rows.length) {
+        todoDrag.insertBeforeId = null;
+        todoDrag.insertAfter = false;
+        return;
+      }
+      let target = rows[rows.length - 1];
+      let after = true;
+      for (const row of rows) {
+        const rect = row.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        if (clientY < mid) {
+          target = row;
+          after = false;
+          break;
+        }
+        target = row;
+        after = true;
+      }
+      todoDrag.insertBeforeId = target.getAttribute("data-todo-id");
+      todoDrag.insertAfter = after;
+      target.classList.add(after ? "drag-insert-after" : "drag-insert-before");
+    }
+
+    function applyTodoReorder() {
+      const date = selectedDate;
+      const dayTodos = sortTodosForDay(state.todos.filter((t) => t.date === date));
+      const open = dayTodos.filter((t) => !t.done);
+      const from = open.findIndex((t) => t.id === todoDrag.id);
+      if (from < 0) return false;
+      const moving = open[from];
+      const rest = open.filter((t) => t.id !== todoDrag.id);
+      let to = rest.length;
+      if (todoDrag.insertBeforeId) {
+        const idx = rest.findIndex((t) => t.id === todoDrag.insertBeforeId);
+        if (idx >= 0) to = todoDrag.insertAfter ? idx + 1 : idx;
+      }
+      rest.splice(to, 0, moving);
+      const stamp = nowStamp();
+      const orderMap = new Map(rest.map((t, i) => [t.id, i]));
+      state.todos = state.todos.map((t) => {
+        if (t.date !== date || t.done) return t;
+        if (!orderMap.has(t.id)) return t;
+        return { ...t, order: orderMap.get(t.id), orderAt: stamp, updatedAt: stamp };
+      });
+      state.updatedAt = stamp;
+      saveStore(null, { keepStamp: true });
+      return true;
+    }
+
+    let suppressTodoClickUntil = 0;
+
+    function endTodoDrag(commit) {
+      if (!todoDrag.active) return;
+      const shouldCommit = commit && todoDrag.moved;
+      if (todoDrag.moved) suppressTodoClickUntil = Date.now() + 350;
+      removeTodoGhost();
+      clearTodoDragMarks();
+      const changed = shouldCommit ? applyTodoReorder() : false;
+      todoDrag.active = false;
+      todoDrag.moved = false;
+      todoDrag.id = null;
+      todoDrag.pointerId = null;
+      todoDrag.insertBeforeId = null;
+      todoDrag.insertAfter = false;
+      if (changed) renderAll();
+    }
+
+    function startTodoDrag(handle, event) {
+      if (event.button != null && event.button !== 0) return;
+      const id = handle.getAttribute("data-todo-drag-handle");
+      const row = handle.closest(".todo-row");
+      if (!id || !row || row.classList.contains("done")) return;
+      event.preventDefault();
+      todoDrag.active = true;
+      todoDrag.moved = false;
+      todoDrag.id = id;
+      todoDrag.startY = event.clientY;
+      todoDrag.pointerId = event.pointerId;
+      todoDrag.insertBeforeId = null;
+      todoDrag.insertAfter = false;
+      try { handle.setPointerCapture(event.pointerId); } catch {}
+      const ghost = document.createElement("div");
+      ghost.className = "todo-drag-ghost";
+      ghost.textContent = row.querySelector(".todo-text")?.textContent || "待办";
+      document.body.appendChild(ghost);
+      todoDrag.ghost = ghost;
+      ghost.style.left = `${Math.max(8, event.clientX - 20)}px`;
+      ghost.style.top = `${Math.max(8, event.clientY - 16)}px`;
+      row.classList.add("dragging");
+    }
+
+    $("todoList").addEventListener("pointerdown", (e) => {
+      const handle = e.target.closest("[data-todo-drag-handle]");
+      if (!handle || !$("todoList").contains(handle)) return;
+      startTodoDrag(handle, e);
+    });
+    window.addEventListener("pointermove", (e) => {
+      if (!todoDrag.active) return;
+      if (todoDrag.pointerId != null && e.pointerId !== todoDrag.pointerId) return;
+      if (Math.abs(e.clientY - todoDrag.startY) > 4) todoDrag.moved = true;
+      if (todoDrag.ghost) {
+        todoDrag.ghost.style.left = `${Math.max(8, e.clientX - 20)}px`;
+        todoDrag.ghost.style.top = `${Math.max(8, e.clientY - 16)}px`;
+      }
+      updateTodoDragIndicator(e.clientY);
+    });
+    window.addEventListener("pointerup", (e) => {
+      if (!todoDrag.active) return;
+      if (todoDrag.pointerId != null && e.pointerId !== todoDrag.pointerId) return;
+      endTodoDrag(true);
+    });
+    window.addEventListener("pointercancel", () => endTodoDrag(false));
 
     document.body.addEventListener("submit", (e) => {
       const form = e.target.closest("[data-add-subtask]");
@@ -1662,11 +1920,26 @@
       } else if (delE) {
         if (confirm("确定删除这条日程？")) removeItem("events", delE.getAttribute("data-del-event"));
       } else if (toggleT) {
+        if (todoDrag.active || Date.now() < suppressTodoClickUntil) return;
         const id = toggleT.getAttribute("data-toggle-todo");
-        state.todos = state.todos.map((t) => t.id === id ? { ...t, done: !t.done } : t);
+        const current = state.todos.find((x) => x.id === id);
+        if (!current) return;
+        const becomingOpen = !!current.done;
+        const reopenOrder = becomingOpen ? nextTodoOrder(current.date) : null;
+        const stamp = nowStamp();
+        state.todos = state.todos.map((t) => {
+          if (t.id !== id) return t;
+          const next = { ...t, done: !t.done, updatedAt: stamp };
+          if (becomingOpen) {
+            next.order = reopenOrder;
+            next.orderAt = stamp;
+          }
+          return next;
+        });
         saveStore();
         renderAll();
       } else if (editT) {
+        if (todoDrag.active || Date.now() < suppressTodoClickUntil) return;
         const id = editT.getAttribute("data-edit-todo");
         const t = state.todos.find((x) => x.id === id);
         if (!t) return;
@@ -1678,6 +1951,7 @@
         saveStore();
         renderAll();
       } else if (delT) {
+        if (todoDrag.active || Date.now() < suppressTodoClickUntil) return;
         if (confirm("确定删除这条待办？")) removeItem("todos", delT.getAttribute("data-del-todo"));
       }
     });
