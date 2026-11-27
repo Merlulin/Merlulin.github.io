@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-27T10:04:29+08:00",
+  "updatedAt": "2026-11-27T10:04:34+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -148,8 +148,15 @@
       "end": "2026-11-30",
       "progress": 0,
       "status": "进行中",
-      "updatedAt": "2026-11-27T10:04:29+08:00",
-      "subtasks": []
+      "updatedAt": "2026-11-27T10:04:34+08:00",
+      "subtasks": [
+        {
+          "id": "s-mwyc93ic-rn5un5",
+          "text": "初版制作",
+          "done": false,
+          "updatedAt": "2026-11-27T10:04:34+08:00"
+        }
+      ]
     }
   ],
   "events": [
