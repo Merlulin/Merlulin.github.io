@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-27T10:04:44+08:00",
+  "updatedAt": "2026-11-27T10:04:46+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -146,14 +146,14 @@
       "name": "优化宣传册（新闻稿会不断发出来，需要持续更新上去）",
       "start": "2026-11-26",
       "end": "2026-11-30",
-      "progress": 0,
+      "progress": 50,
       "status": "进行中",
       "subtasks": [
         {
           "id": "s-mwyc93ic-rn5un5",
           "text": "初版制作",
-          "done": false,
-          "updatedAt": "2026-11-27T10:04:34+08:00"
+          "done": true,
+          "updatedAt": "2026-11-27T10:04:46+08:00"
         },
         {
           "id": "s-mwyc96mc-iekec9",
@@ -162,7 +162,7 @@
           "updatedAt": "2026-11-27T10:04:38+08:00"
         }
       ],
-      "updatedAt": "2026-11-27T10:04:44+08:00"
+      "updatedAt": "2026-11-27T10:04:46+08:00"
     }
   ],
   "events": [
