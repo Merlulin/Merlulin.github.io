@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-27T10:04:46+08:00",
+  "updatedAt": "2026-11-27T12:52:59+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -458,7 +458,7 @@
       "id": "t-mwxaogy4-vrz3tb",
       "date": "2026-11-27",
       "text": "协议修订盖章",
-      "done": false
+      "done": true
     },
     {
       "id": "t-mwxaokqv-r45xdu",
