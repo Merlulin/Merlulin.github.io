@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-27T16:30:30+08:00",
+  "updatedAt": "2026-11-27T16:30:40+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -518,6 +518,12 @@
       "id": "t-mwyq1ent-ex9b2w",
       "date": "2026-11-28",
       "text": "区域推广方案放到表格里",
+      "done": false
+    },
+    {
+      "id": "t-mwyq1mpw-ilhfir",
+      "date": "2026-11-28",
+      "text": "黄书记PPT制作",
       "done": false
     }
   ],
