@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-27T10:04:22+08:00",
+  "updatedAt": "2026-11-27T10:04:29+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -148,15 +148,8 @@
       "end": "2026-11-30",
       "progress": 0,
       "status": "进行中",
-      "updatedAt": "2026-11-27T10:04:22+08:00",
-      "subtasks": [
-        {
-          "id": "s-mwyc8u37-pqo7u2",
-          "text": "发稿",
-          "done": false,
-          "updatedAt": "2026-11-27T10:04:22+08:00"
-        }
-      ]
+      "updatedAt": "2026-11-27T10:04:29+08:00",
+      "subtasks": []
     }
   ],
   "events": [
@@ -483,6 +476,7 @@
     "t-20261119-chuangbangdai",
     "t-20261122-huang-ppt",
     "t-20261122-longwan-plan",
-    "t-20261123-handbook-domain"
+    "t-20261123-handbook-domain",
+    "s-mwyc8u37-pqo7u2"
   ]
 }
