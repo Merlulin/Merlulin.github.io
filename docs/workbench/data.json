@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-28T00:14:27+08:00",
+  "updatedAt": "2026-11-28T00:14:38+08:00",
   "projects": [
     {
       "id": "p-longwan-202611",
@@ -526,25 +526,37 @@
       "id": "t-mwyq12y4-lu9k4z",
       "date": "2026-11-28",
       "text": "领航学校方案优化",
-      "done": false
+      "done": false,
+      "order": 1,
+      "orderAt": "2026-11-28T00:14:38+08:00",
+      "updatedAt": "2026-11-28T00:14:38+08:00"
     },
     {
       "id": "t-mwyq19eb-oi4lnh",
       "date": "2026-11-28",
       "text": "语文学科方案优化",
-      "done": false
+      "done": false,
+      "order": 2,
+      "orderAt": "2026-11-28T00:14:38+08:00",
+      "updatedAt": "2026-11-28T00:14:38+08:00"
     },
     {
       "id": "t-mwyq1ent-ex9b2w",
       "date": "2026-11-28",
       "text": "区域推广方案放到表格里",
-      "done": false
+      "done": false,
+      "order": 3,
+      "orderAt": "2026-11-28T00:14:38+08:00",
+      "updatedAt": "2026-11-28T00:14:38+08:00"
     },
     {
       "id": "t-mwyq1mpw-ilhfir",
       "date": "2026-11-28",
       "text": "黄书记PPT制作",
-      "done": false
+      "done": false,
+      "order": 0,
+      "orderAt": "2026-11-28T00:14:38+08:00",
+      "updatedAt": "2026-11-28T00:14:38+08:00"
     }
   ],
   "deletedIds": [
